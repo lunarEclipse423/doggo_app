@@ -1,2 +1,4 @@
 # doggo_app
 Mobile android app for safe dog walking
+***
+* Белова Мария, гр. 3530202/90201
