@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps/input_code.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
@@ -14,10 +16,10 @@ class _InputPhoneNumberWindowState extends State<InputPhoneNumberWindow> {
 
   void _onLogInButtonPressed() {
     setState(() {
-      //тут надо сделать переход к окну с вводом кода из смс
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => InputCodeWindow(phoneNumber)));
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

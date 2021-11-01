@@ -46,9 +46,12 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Geolocation',
       initialRoute: '/',
       routes: {
-        '/':(BuildContext context) => LoginScreen(),
+        '/':(BuildContext context) => WelcomeWindow(),
         '/map':(BuildContext context) => Map(),
-        '/dogProfile':(BuildContext context) => DogProfile()
+        '/dogProfile':(BuildContext context) => DogProfile(),
+        '/inputPhoneNumber':(BuildContext context) => InputPhoneNumberWindow(),
+        //  '/inputCode':(BuildContext context) => InputCodeWindow(phoneNumber),
+        '/register':(BuildContext context) => RegisterWindow(),
         //тут в общем заводим пути для наших окошек всех
       },
     );
@@ -122,9 +125,7 @@ class _MapState extends State<Map> {
         .doc(FirebaseAuth.instance.currentUser.uid)
         .update({
       'location': GeoPoint(_currentLocation.latitude, _currentLocation.longitude)
-    })
-        .then((value) => print("User Added"))
-        .catchError((error) => print("Failed to add user: $error"));
+    });
   }
 
   void _updatePinOnMap() async
@@ -183,8 +184,14 @@ class _MapState extends State<Map> {
     });
   }
 
-  void _onChangeStatusButtonPressed() async {
-    //тут смена статуса собаки
+  ImageProvider<Object> _dogStatus = AssetImage('assets/good.png');
+  ImageProvider<Object> GOOD_DOG = AssetImage('assets/good.png');
+  ImageProvider<Object> BAD_DOG = AssetImage('assets/bad.png');
+
+  void _onChangeStatusButtonPressed() {
+    setState(() {
+      _dogStatus = (_dogStatus == GOOD_DOG? BAD_DOG : GOOD_DOG);
+    });
   }
 
   MapType _currentMapType = MapType.normal;
@@ -238,15 +245,9 @@ class _MapState extends State<Map> {
               final List<DocumentSnapshot> documents = result.docs;
               setState(() {
                 documents.forEach((data) {
-                  // data.get('isWalking').then((value) => print("Walk status find"))
-                  //     .catchError((error) => print("Walk status not find: $error"));
                   if (data.get('isWalking') == true) {
                     _addMarker(data);
                   }
-                  else
-                    {
-                      print('isWalking == false');
-                    }
                 }
                 );
             });},
@@ -393,12 +394,13 @@ class _MapState extends State<Map> {
                                     MainAxisAlignment.center,
                                     crossAxisAlignment:
                                     CrossAxisAlignment.center,
-                                    /*children: [
-                                            Container(
-                                                child: Icon(Elusive.star,
-                                                    color: Color(0xff52a8f7),
-                                                    size: 50)),
-                                          ],*/
+                                    children: [
+                                      Container(
+                                          child: Image (
+                                              image: _dogStatus
+                                          )
+                                      ),
+                                          ],
                                   ),
                                 ),
                               ],

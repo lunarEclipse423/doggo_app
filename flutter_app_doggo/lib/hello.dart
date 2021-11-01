@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'register.dart';
+import 'input_phone_number.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 
 class WelcomeWindow extends StatefulWidget {
   @override
@@ -9,13 +12,19 @@ class WelcomeWindow extends StatefulWidget {
 class _WelcomeWindowState extends State<WelcomeWindow> {
   void _onLogInButtonPressed() {
     setState(() {
-      //тут надо сделать переход к окну с вводом номера телефона
+      //Navigator.pushNamedAndRemoveUntil(context, '/inputPhoneNumber', (route) => false);
+      Navigator.of(context).push(SwipeablePageRoute(
+        builder: (BuildContext context) => InputPhoneNumberWindow(),
+      ));
     });
   }
 
   void _onRegisterButtonPressed() {
     setState(() {
-      //тут надо сделать переход к окну с вводом номера телефона
+      //Navigator.pushNamedAndRemoveUntil(context, '/register', (route) => false);
+      Navigator.of(context).push(SwipeablePageRoute(
+        builder: (BuildContext context) => RegisterWindow(),
+      ));
     });
   }
 

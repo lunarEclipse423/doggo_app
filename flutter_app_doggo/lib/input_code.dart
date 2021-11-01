@@ -7,6 +7,8 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pinput/pin_put/pin_put.dart';
 
 class InputCodeWindow extends StatefulWidget {
+  final String phone;
+  InputCodeWindow(this.phone);
   @override
   _InputCodeWindowState createState() => _InputCodeWindowState();
 }
@@ -20,6 +22,43 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
       borderRadius: BorderRadius.circular(7),
       color: Color(0x7248659e),
     );
+
+
+  _verifyPhone() async {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: '${widget.phone}',
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await FirebaseAuth.instance
+              .signInWithCredential(credential)
+              .then((value) async {
+            if (value.user != null) {
+              Navigator.pushNamedAndRemoveUntil(context, '/map', (route) => false);
+            }
+          });
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print(e.message);
+        },
+        codeSent: (String verficationID, int resendToken) {
+          setState(() {
+            _verificationCode = verficationID;
+          });
+        },
+        codeAutoRetrievalTimeout: (String verificationID) {
+          setState(() {
+            _verificationCode = verificationID;
+          });
+        },
+        timeout: const Duration(seconds: 30));
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _verifyPhone();
+  }
+
 
   @override
   Widget build(BuildContext context) {
