@@ -10,20 +10,23 @@ class WelcomeWindow extends StatefulWidget {
 }
 
 class _WelcomeWindowState extends State<WelcomeWindow> {
+  bool register;
   void _onLogInButtonPressed() {
     setState(() {
+      this.register = false;
       //Navigator.pushNamedAndRemoveUntil(context, '/inputPhoneNumber', (route) => false);
       Navigator.of(context).push(SwipeablePageRoute(
-        builder: (BuildContext context) => InputPhoneNumberWindow(),
+        builder: (BuildContext context) => InputPhoneNumberWindow(this.register),
       ));
     });
   }
 
   void _onRegisterButtonPressed() {
     setState(() {
+      register = true;
       //Navigator.pushNamedAndRemoveUntil(context, '/register', (route) => false);
       Navigator.of(context).push(SwipeablePageRoute(
-        builder: (BuildContext context) => RegisterWindow(),
+        builder: (BuildContext context) => RegisterWindow(register),
       ));
     });
   }

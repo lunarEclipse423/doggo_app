@@ -3,18 +3,44 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'input_code.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
+
 
 class RegisterWindow extends StatefulWidget {
+  final bool register;
+  RegisterWindow(this.register);
   @override
   _RegisterWindowState createState() => _RegisterWindowState();
 }
 
 class _RegisterWindowState extends State<RegisterWindow> {
   String phoneNumber;
+  String name;
 
-  void _onRegisterButtonPressed() {
+  void _onRegisterButtonPressed() async {
+    bool isAuth = false;
+    final QuerySnapshot result = await FirebaseFirestore.instance.collection('users').get();
+    final List<DocumentSnapshot> documents = result.docs;
     setState(() {
-      //тут надо сделать переход к окну из input_code
+      documents.forEach((data) async {
+        if(data.get('phoneNumber') == phoneNumber)
+        {
+          if(widget.register == true) {
+            isAuth = true;
+            FocusScope.of(context).unfocus();
+            GlobalKey<ScaffoldState>().currentState
+                .showSnackBar(SnackBar(content: Text('Вы уже зарегистрированны!')));
+            print("Уже зареган!");
+          }
+        }
+      }
+      );
+      if(isAuth == false) {
+        Navigator.of(context).push(SwipeablePageRoute(
+            builder: (context) => InputCodeWindow(phoneNumber, name)));
+      }
     });
   }
 
@@ -94,6 +120,10 @@ class _RegisterWindowState extends State<RegisterWindow> {
                     decoration: InputDecoration(
                       border: UnderlineInputBorder(),
                     ),
+                    onChanged: (input)
+                    {
+                      name = input;
+                    },
                   ),
                 ),
                 SizedBox(height: 48.67),

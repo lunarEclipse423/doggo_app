@@ -5,10 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pinput/pin_put/pin_put.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps/add_dog.dart';
+
 
 class InputCodeWindow extends StatefulWidget {
   final String phone;
-  InputCodeWindow(this.phone);
+  final String name;
+  InputCodeWindow(this.phone, this.name);
   @override
   _InputCodeWindowState createState() => _InputCodeWindowState();
 }
@@ -32,7 +37,13 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
               .signInWithCredential(credential)
               .then((value) async {
             if (value.user != null) {
-              Navigator.pushNamedAndRemoveUntil(context, '/map', (route) => false);
+              final DocumentReference user = FirebaseFirestore.instance.collection('users')
+                  .doc(FirebaseAuth.instance.currentUser.uid);
+              user.set({
+                'name': widget.name,
+              }, SetOptions(merge: false));
+              user.update({'phoneNumber' : widget.phone});
+              Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
             }
           });
         },
@@ -112,7 +123,7 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                   alignment: Alignment.center,
                   child: Container(
                     child: Text(
-                      "Привет, " + "<имя>!", //!!!!!!!!!!!тут должно отображаться имя пользователя из БД
+                      "Привет, ${widget.name}!", //!!!!!!!!!!!тут должно отображаться имя пользователя из БД
                       style: TextStyle(
                         color: Color(0xff48659e),
                         fontSize: 14,
@@ -162,7 +173,15 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                           verificationId: _verificationCode, smsCode: pin))
                           .then((value) async {
                         if (value.user != null) {
-                          Navigator.pushNamedAndRemoveUntil(context, '/map', (route) => false);
+                          final DocumentReference user = FirebaseFirestore.instance.collection('users')
+                              .doc(FirebaseAuth.instance.currentUser.uid);
+                          user.set({
+                            'name': widget.name,
+                          }, SetOptions(merge: false));
+                          user.update({
+                            'phoneNumber': widget.phone,
+                          });
+                          Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
                         }
                       });
                     } catch (e) {

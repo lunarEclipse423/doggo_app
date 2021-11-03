@@ -1,12 +1,17 @@
 import 'dart:ui';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps/input_code.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps/register.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
+
 
 class InputPhoneNumberWindow extends StatefulWidget {
+  final bool register;
+  InputPhoneNumberWindow(this.register);
   @override
   _InputPhoneNumberWindowState createState() => _InputPhoneNumberWindowState();
 }
@@ -14,12 +19,73 @@ class InputPhoneNumberWindow extends StatefulWidget {
 class _InputPhoneNumberWindowState extends State<InputPhoneNumberWindow> {
   String phoneNumber;
 
-  void _onLogInButtonPressed() {
+  void _onLogInButtonPressed() async {
+    final QuerySnapshot result = await FirebaseFirestore.instance.collection('users').get();
+    final List<DocumentSnapshot> documents = result.docs;
     setState(() {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => InputCodeWindow(phoneNumber)));
+      documents.forEach((data) async {
+        if(data.get('phoneNumber') == phoneNumber)
+        {
+          if(widget.register == false) {
+            Navigator.of(context).push(SwipeablePageRoute(
+                builder: (context) =>
+                    InputCodeWindow(phoneNumber, data.get('name'))));
+          }
+          else
+            {
+              FocusScope.of(context).unfocus();
+              GlobalKey<ScaffoldState>().currentState
+                  .showSnackBar(SnackBar(content: Text('Аккаунт не найден!')));
+              return;
+            }
+        }
+        }
+      );
     });
+
+
+
+    // try {
+    //   Auth admin;
+    //   admin.nativeInstance.getUserByPhoneNumber(phoneNumber).then((
+    //       value) async {
+    //     if (value != null) {
+    //       final cf.DocumentSnapshot user = await cf.FirebaseFirestore.instance.collection('users')
+    //           .doc(FirebaseAuth.instance.currentUser.uid).get();
+    //       Navigator.of(this.context).push(MaterialPageRoute(
+    //           builder: (context) =>
+    //               InputCodeWindow(phoneNumber, user.get('name'))));
+    //     }
+    //   });
+    // } catch(e) {
+    //     FocusScope.of(this.context).unfocus();
+    //     GlobalKey<ScaffoldState>().currentState
+    //         // ignore: deprecated_member_use
+    //         .showSnackBar(SnackBar(content: Text('Аккаунт не найден :с')));
+    // }
+
+    //     .then((value) async {
+    //   final DocumentSnapshot user = await FirebaseFirestore.instance.collection(
+    //       'users')
+    //       .doc(FirebaseAuth.instance.currentUser.uid).get();
+    //   Navigator.of(context).push(MaterialPageRoute(
+    //       builder: (context) => InputCodeWindow(phoneNumber, user.get('name'))));
+    // })
+    //     .catchError((error) {
+    //   FocusScope.of(context).unfocus();
+    //   GlobalKey<ScaffoldState>().currentState
+    //   // ignore: deprecated_member_use
+    //       .showSnackBar(SnackBar(content: Text('Аккаунт не найден :с')));
+    // }
+    // );
+    // } catch (e) {
+    //   // FocusScope.of(context).unfocus();
+    //   // GlobalKey<ScaffoldState>().currentState
+    //   //     // ignore: deprecated_member_use
+    //   //     .showSnackBar(SnackBar(content: Text('Аккаунт не найден :с')));
+    // }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

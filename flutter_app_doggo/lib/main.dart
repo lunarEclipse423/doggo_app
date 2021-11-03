@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_maps/add_dog.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:google_maps/dog_profile.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -16,6 +17,8 @@ import 'package:google_maps/hello.dart';
 import 'input_phone_number.dart';
 import 'input_code.dart';
 import 'register.dart';
+import 'package:fluttericon/web_symbols_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 
 void main() => runApp(App());
@@ -49,9 +52,10 @@ class MyApp extends StatelessWidget {
         '/':(BuildContext context) => WelcomeWindow(),
         '/map':(BuildContext context) => Map(),
         '/dogProfile':(BuildContext context) => DogProfile(),
-        '/inputPhoneNumber':(BuildContext context) => InputPhoneNumberWindow(),
+        '/inputPhoneNumber':(BuildContext context) => InputPhoneNumberWindow(true),
         //  '/inputCode':(BuildContext context) => InputCodeWindow(phoneNumber),
-        '/register':(BuildContext context) => RegisterWindow(),
+        '/register':(BuildContext context) => RegisterWindow(true),
+        '/addDog':(BuildContext context) => AddDogWindow(),
         //тут в общем заводим пути для наших окошек всех
       },
     );
@@ -87,7 +91,7 @@ class _MapState extends State<Map> {
   void initState() {
     super.initState();
     _location = new Location();
-    _location.onLocationChanged().listen((LocationData cLoc) {
+    _location.onLocationChanged.listen((LocationData cLoc) {
       // cLoc contains the lat and long of the
       // current user's position in real time,
       // so we're holding on to it
@@ -158,8 +162,9 @@ class _MapState extends State<Map> {
   }
 
   void _setCustomMapPin() async {
-    _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5), 'assets/icon.png');
+      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
+          ImageConfiguration(devicePixelRatio: 2.5),
+          'assets/geo_icon_green.png');
   }
 
   void _onWalkButtonPressed() async {
@@ -184,14 +189,50 @@ class _MapState extends State<Map> {
     });
   }
 
-  ImageProvider<Object> _dogStatus = AssetImage('assets/good.png');
-  ImageProvider<Object> GOOD_DOG = AssetImage('assets/good.png');
-  ImageProvider<Object> BAD_DOG = AssetImage('assets/bad.png');
+  // ImageProvider<Object> _dogStatus = AssetImage('assets/good_new.svg');
+  Widget _dogStatus =  SvgPicture.asset('assets/good.svg');
+  final Widget GoodDogIcon = SvgPicture.asset('assets/good.svg');
+  final Widget BadDogIcon = SvgPicture.asset('assets/bad.svg');
+  //ImageProvider<Object> GOOD_DOG = AssetImage('assets/good_new.svg');
+  //ImageProvider<Object> BAD_DOG = AssetImage('assets/bad.png');
 
-  void _onChangeStatusButtonPressed() {
+  void _onChangeStatusButtonPressed() async {
+    if (_dogStatus == GoodDogIcon)
+    {
+      _dogStatus = BadDogIcon;
+      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
+          ImageConfiguration(devicePixelRatio: 2.5),
+          'assets/geo_icon_red.png');
+    }
+    else
+    {
+      _dogStatus = GoodDogIcon;
+      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
+          ImageConfiguration(devicePixelRatio: 2.5),
+          'assets/geo_icon_green.png');
+    }
+    //дальше обновляем прорисовку марки
+    _markers.removeWhere((m)=>m.markerId.value == FirebaseAuth.instance.currentUser.uid); //удаление прорисованной марки
+    //и прорисовываем:
+    final DocumentSnapshot readUser = await FirebaseFirestore.instance.collection('users')
+        .doc(FirebaseAuth.instance.currentUser.uid).get();
+    if (readUser.get('isWalking') == true) {
+      _markers.add(
+          Marker(
+              markerId: MarkerId(FirebaseAuth.instance.currentUser.uid),
+              icon: _pinLocationIcon,
+              position: LatLng(
+                  _currentLocation.latitude, _currentLocation.longitude),
+              onTap: () {
+                Navigator.of(context).push(SwipeablePageRoute(
+                  builder: (BuildContext context) => DogProfile(),
+                ));
+              })
+      );
+    }
     setState(() {
-      _dogStatus = (_dogStatus == GOOD_DOG? BAD_DOG : GOOD_DOG);
     });
+
   }
 
   MapType _currentMapType = MapType.normal;
@@ -396,9 +437,9 @@ class _MapState extends State<Map> {
                                     CrossAxisAlignment.center,
                                     children: [
                                       Container(
-                                          child: Image (
-                                              image: _dogStatus
-                                          )
+                                      child: _dogStatus,
+                                          //     image: _dogStatus
+                                          // )
                                       ),
                                           ],
                                   ),
