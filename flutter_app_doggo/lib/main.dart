@@ -52,17 +52,29 @@ class MyApp extends StatelessWidget {
         '/':(BuildContext context) => WelcomeWindow(),
         '/map':(BuildContext context) => Map(),
         '/dogProfile':(BuildContext context) => DogProfile(),
-        '/inputPhoneNumber':(BuildContext context) => InputPhoneNumberWindow(true),
+        '/inputPhoneNumber':(BuildContext context) => InputPhoneNumberWindow(),
         //  '/inputCode':(BuildContext context) => InputCodeWindow(phoneNumber),
-        '/register':(BuildContext context) => RegisterWindow(true),
+        '/register':(BuildContext context) => RegisterWindow(),
         '/addDog':(BuildContext context) => AddDogWindow(),
         //тут в общем заводим пути для наших окошек всех
+      },
+      onGenerateRoute: (routeSettings){
+        var path = routeSettings.name.split('/');
+
+        if (path[1] == "map") {
+          return new MaterialPageRoute(
+            builder: (context) => new Map(uid:path[2]),
+            settings: routeSettings,
+          );
+        }
       },
     );
   }
 }
 
 class Map extends StatefulWidget {
+  final String _currentUid;
+  Map({String uid}):_currentUid = uid;
   @override
   _MapState createState() => _MapState();
 }
@@ -126,7 +138,7 @@ class _MapState extends State<Map> {
   void _updateLocationOnDataBase() async {
     CollectionReference users = FirebaseFirestore.instance.collection('users');
     users
-        .doc(FirebaseAuth.instance.currentUser.uid)
+        .doc(widget._currentUid)
         .update({
       'location': GeoPoint(_currentLocation.latitude, _currentLocation.longitude)
     });
@@ -150,11 +162,9 @@ class _MapState extends State<Map> {
   void _setUserData() async {
     _currentLocation = await _location.getLocation();
     final DocumentReference user = FirebaseFirestore.instance.collection('users')
-        .doc(FirebaseAuth.instance.currentUser.uid);
+        .doc(widget._currentUid);
     user.update({
-      'location': GeoPoint(_currentLocation.latitude, _currentLocation.longitude)
-    });
-    user.update({
+      'location': GeoPoint(_currentLocation.latitude, _currentLocation.longitude),
       'isWalking': false
     });
 
@@ -169,9 +179,9 @@ class _MapState extends State<Map> {
 
   void _onWalkButtonPressed() async {
     final DocumentSnapshot readUser = await FirebaseFirestore.instance.collection('users')
-        .doc(FirebaseAuth.instance.currentUser.uid).get();
+        .doc(widget._currentUid).get();
     final DocumentReference writeUser = FirebaseFirestore.instance.collection('users')
-        .doc(FirebaseAuth.instance.currentUser.uid);
+        .doc(widget._currentUid);
     setState(() {
       writeUser.update({
         'isWalking': (readUser.get('isWalking') == true ? false : true)
@@ -212,14 +222,14 @@ class _MapState extends State<Map> {
           'assets/geo_icon_green.png');
     }
     //дальше обновляем прорисовку марки
-    _markers.removeWhere((m)=>m.markerId.value == FirebaseAuth.instance.currentUser.uid); //удаление прорисованной марки
+    _markers.removeWhere((m)=>m.markerId.value == widget._currentUid); //удаление прорисованной марки
     //и прорисовываем:
     final DocumentSnapshot readUser = await FirebaseFirestore.instance.collection('users')
-        .doc(FirebaseAuth.instance.currentUser.uid).get();
+        .doc(widget._currentUid).get();
     if (readUser.get('isWalking') == true) {
       _markers.add(
           Marker(
-              markerId: MarkerId(FirebaseAuth.instance.currentUser.uid),
+              markerId: MarkerId(widget._currentUid),
               icon: _pinLocationIcon,
               position: LatLng(
                   _currentLocation.latitude, _currentLocation.longitude),

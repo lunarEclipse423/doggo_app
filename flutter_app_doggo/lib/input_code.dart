@@ -3,30 +3,36 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pinput/pin_put/pin_put.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps/add_dog.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 
 class InputCodeWindow extends StatefulWidget {
   final String phone;
   final String name;
-  InputCodeWindow(this.phone, this.name);
+  final bool register;
+  InputCodeWindow(this.phone, this.name, this.register);
   @override
   _InputCodeWindowState createState() => _InputCodeWindowState();
 }
 
 class _InputCodeWindowState extends State<InputCodeWindow> {
-  final GlobalKey<ScaffoldState> _scaffoldkey = GlobalKey<ScaffoldState>();
   String _verificationCode;
   final TextEditingController _pinPutController = TextEditingController();
   final FocusNode _pinPutFocusNode = FocusNode();
   final BoxDecoration pinPutDecoration = BoxDecoration(
-      borderRadius: BorderRadius.circular(7),
-      color: Color(0x7248659e),
-    );
+    borderRadius: BorderRadius.circular(7),
+    color: Color(0x7248659e),
+  );
+
+  _write(String text) async {
+    final Directory directory = await getApplicationDocumentsDirectory();
+    final File file = File('${directory.path}/auto_auth.txt');
+    await file.writeAsString(text);
+  }
 
 
   _verifyPhone() async {
@@ -37,12 +43,23 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
               .signInWithCredential(credential)
               .then((value) async {
             if (value.user != null) {
-              final DocumentReference user = FirebaseFirestore.instance.collection('users')
+              final DocumentReference user = FirebaseFirestore.instance
+                  .collection('users')
                   .doc(FirebaseAuth.instance.currentUser.uid);
-              user.set({
-                'name': widget.name,
-              }, SetOptions(merge: false));
-              user.update({'phoneNumber' : widget.phone});
+              if(widget.register == true) {
+                user.set({
+                  'name': widget.name,
+                  'phoneNumber': widget.phone,
+                  'location' : GeoPoint(0.0, 0.0),
+                  'isWalking' : false,
+                  'status' : true,
+                  'auth' : true
+                }, SetOptions(merge: false));
+              }
+              else {
+                user.update({'auth' : true});
+              }
+              _write('${widget.phone}');
               Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
             }
           });
@@ -120,19 +137,19 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                 ),
                 SizedBox(height: 88.67),
                 Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    child: Text(
-                      "Привет, ${widget.name}!", //!!!!!!!!!!!тут должно отображаться имя пользователя из БД
-                      style: TextStyle(
-                        color: Color(0xff48659e),
-                        fontSize: 14,
-                        fontFamily: "Roboto",
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.98,
+                    alignment: Alignment.center,
+                    child: Container(
+                      child: Text(
+                        "Привет, ${widget.name}!", //!!!!!!!!!!!тут должно отображаться имя пользователя из БД
+                        style: TextStyle(
+                          color: Color(0xff48659e),
+                          fontSize: 14,
+                          fontFamily: "Roboto",
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.98,
+                        ),
                       ),
-                  ),
-                )),
+                    )),
                 SizedBox(height: 14.67),
                 Align(
                     alignment: Alignment.center,
@@ -151,7 +168,7 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                 SizedBox(height: 38.67),
                 PinPut(
                   fieldsCount: 6,
-                    fieldsAlignment: MainAxisAlignment.spaceEvenly,
+                  fieldsAlignment: MainAxisAlignment.spaceEvenly,
                   textStyle: const TextStyle(
                     color: Color(0xfffbfbfb),
                     fontSize: 20,
@@ -173,26 +190,37 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                           verificationId: _verificationCode, smsCode: pin))
                           .then((value) async {
                         if (value.user != null) {
-                          final DocumentReference user = FirebaseFirestore.instance.collection('users')
-                              .doc(FirebaseAuth.instance.currentUser.uid);
-                          user.set({
-                            'name': widget.name,
-                          }, SetOptions(merge: false));
-                          user.update({
-                            'phoneNumber': widget.phone,
-                          });
+                          if(widget.register == true) {
+                            final DocumentReference user = FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser.uid);
+                            user.set({
+                              'name': widget.name,
+                              'phoneNumber': widget.phone,
+                              'location' : GeoPoint(0.0, 0.0),
+                              'isWalking' : false,
+                              'status' : true,
+                              'auth' : true
+                            }, SetOptions(merge: false));
+                          }
+                          _write('${widget.phone}');
+                          //File('assets/auto_auth.txt').writeAsString('${widget.phone}');
                           Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
                         }
                       });
                     } catch (e) {
-                      FocusScope.of(context).unfocus();
-                      _scaffoldkey.currentState
-                          .showSnackBar(SnackBar(content: Text('invalid OTP')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:Text('Неверный код!'),
+                          backgroundColor: Colors.red,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
                     }
                   },
                 ),
                 SizedBox(height: 58.67),
-               /* TextButton(
+                /* TextButton(
                   onPressed: _onLogInButtonPressed,
                   child: Stack(
                     alignment: Alignment.center,
