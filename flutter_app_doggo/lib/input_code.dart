@@ -21,6 +21,7 @@ class InputCodeWindow extends StatefulWidget {
 
 class _InputCodeWindowState extends State<InputCodeWindow> {
   String _verificationCode;
+  int _forceResendingToken;
   final TextEditingController _pinPutController = TextEditingController();
   final FocusNode _pinPutFocusNode = FocusNode();
   final BoxDecoration pinPutDecoration = BoxDecoration(
@@ -46,7 +47,8 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
               final DocumentReference user = FirebaseFirestore.instance
                   .collection('users')
                   .doc(FirebaseAuth.instance.currentUser.uid);
-              if(widget.register == true) {
+              _write('${widget.phone}');
+              if (widget.register == true) {
                 user.set({
                   'name': widget.name,
                   'phoneNumber': widget.phone,
@@ -55,29 +57,32 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                   'status' : true,
                   'auth' : true
                 }, SetOptions(merge: false));
+                Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
               }
               else {
                 user.update({'auth' : true});
+                Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
+                //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
               }
-              _write('${widget.phone}');
-              Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
             }
           });
         },
         verificationFailed: (FirebaseAuthException e) {
           print(e.message);
         },
+        forceResendingToken: _forceResendingToken,
         codeSent: (String verficationID, int resendToken) {
           setState(() {
             _verificationCode = verficationID;
           });
+          _forceResendingToken = resendToken;
         },
         codeAutoRetrievalTimeout: (String verificationID) {
           setState(() {
             _verificationCode = verificationID;
           });
         },
-        timeout: const Duration(seconds: 30));
+        timeout: const Duration(seconds: 60));
   }
 
   @override
@@ -87,6 +92,34 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
     _verifyPhone();
   }
 
+  Row buildTimer() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("Код будет отправлен повторно через ",
+            style: TextStyle(
+              color: Color(0xb248659e),
+              fontSize: 12,
+              fontFamily: "Roboto",
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.84,
+            )),
+        TweenAnimationBuilder(
+          tween: Tween(begin: 60.0, end: 0.00),
+          duration: Duration(seconds: 60),
+          builder: (_, value, child) => Text(
+            value.toInt() > 9? "00:${value.toInt()}" : "00:0${value.toInt()}",
+            style: TextStyle(color: Color(0xb248659e),
+              fontSize: 12,
+              fontFamily: "Roboto",
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.84,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,10 +223,11 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                           verificationId: _verificationCode, smsCode: pin))
                           .then((value) async {
                         if (value.user != null) {
-                          if(widget.register == true) {
-                            final DocumentReference user = FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(FirebaseAuth.instance.currentUser.uid);
+                          final DocumentReference user = FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser.uid);
+                          _write('${widget.phone}');
+                          if (widget.register == true) {
                             user.set({
                               'name': widget.name,
                               'phoneNumber': widget.phone,
@@ -202,12 +236,14 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                               'status' : true,
                               'auth' : true
                             }, SetOptions(merge: false));
+                            Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
                           }
-                          _write('${widget.phone}');
-                          //File('assets/auto_auth.txt').writeAsString('${widget.phone}');
-                          Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
-                        }
-                      });
+                          else {
+                            user.update({'auth' : true});
+                            Navigator.pushNamedAndRemoveUntil(context, '/addDog', (route) => false);
+                            //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
+                          }
+                      }});
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -219,6 +255,8 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
                     }
                   },
                 ),
+                SizedBox(height: 38.67),
+                buildTimer(),
                 SizedBox(height: 58.67),
                 /* TextButton(
                   onPressed: _onLogInButtonPressed,

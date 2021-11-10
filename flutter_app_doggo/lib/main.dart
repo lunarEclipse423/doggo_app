@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps/add_dog.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
@@ -10,7 +11,6 @@ import 'package:fluttericon/elusive_icons.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:google_maps/authentication.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps/hello.dart';
@@ -24,17 +24,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 void main() => runApp(App());
 
 class App extends StatelessWidget {
-
-  // Create the initialization Future outside of `build`:
-  // final Future<FirebaseApp> _initialization = Firebase.initializeApp();
-
   @override
   Widget build(BuildContext context) {
     WidgetsFlutterBinding.ensureInitialized();
     Firebase.initializeApp();
     return FutureBuilder(
-      // Initialize FlutterFire:
-        //future: _initialization,
         builder: (context, snapshot) {
           return MyApp();
         }
@@ -96,7 +90,8 @@ class _MapState extends State<Map> {
   Completer<GoogleMapController> controller1;
   LocationData _currentLocation;
   final Set<Marker> _markers = {};
-  BitmapDescriptor _pinLocationIcon;
+  BitmapDescriptor _greenLocationIcon;
+  BitmapDescriptor _redLocationIcon;
   Location _location;
 
   @override
@@ -104,14 +99,10 @@ class _MapState extends State<Map> {
     super.initState();
     _location = new Location();
     _location.onLocationChanged.listen((LocationData cLoc) {
-      // cLoc contains the lat and long of the
-      // current user's position in real time,
-      // so we're holding on to it
       _currentLocation = cLoc;
       _updatePinOnMap();
       _updateLocationOnDataBase();
     });
-    // set custom marker pins
     _setUserData();
     _setCustomMapPin();
   }
@@ -121,7 +112,7 @@ class _MapState extends State<Map> {
     _markers.add(
         Marker(
             markerId: MarkerId(user.id),
-            icon: _pinLocationIcon,
+            icon: user.get('status') == true ? _greenLocationIcon : _redLocationIcon,
             position: LatLng(user
                 .get('location')
                 .latitude, user
@@ -165,16 +156,19 @@ class _MapState extends State<Map> {
         .doc(widget._currentUid);
     user.update({
       'location': GeoPoint(_currentLocation.latitude, _currentLocation.longitude),
-      'isWalking': false
+      'isWalking': false,
+      'status' : true
     });
-
     setState(() {});
   }
 
   void _setCustomMapPin() async {
-      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-          ImageConfiguration(devicePixelRatio: 2.5),
-          'assets/geo_icon_green.png');
+    _greenLocationIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5),
+        'assets/geo_icon_green.png');
+    _redLocationIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5),
+        'assets/geo_icon_red.png');
   }
 
   void _onWalkButtonPressed() async {
@@ -199,27 +193,23 @@ class _MapState extends State<Map> {
     });
   }
 
-  // ImageProvider<Object> _dogStatus = AssetImage('assets/good_new.svg');
   Widget _dogStatus =  SvgPicture.asset('assets/good.svg');
   final Widget GoodDogIcon = SvgPicture.asset('assets/good.svg');
   final Widget BadDogIcon = SvgPicture.asset('assets/bad.svg');
-  //ImageProvider<Object> GOOD_DOG = AssetImage('assets/good_new.svg');
-  //ImageProvider<Object> BAD_DOG = AssetImage('assets/bad.png');
 
   void _onChangeStatusButtonPressed() async {
+    final DocumentReference writeUser = FirebaseFirestore.instance.collection('users')
+        .doc(widget._currentUid);
+
     if (_dogStatus == GoodDogIcon)
     {
       _dogStatus = BadDogIcon;
-      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-          ImageConfiguration(devicePixelRatio: 2.5),
-          'assets/geo_icon_red.png');
+      writeUser.update({'status' : false});
     }
     else
     {
       _dogStatus = GoodDogIcon;
-      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-          ImageConfiguration(devicePixelRatio: 2.5),
-          'assets/geo_icon_green.png');
+      writeUser.update({'status' : true});
     }
     //дальше обновляем прорисовку марки
     _markers.removeWhere((m)=>m.markerId.value == widget._currentUid); //удаление прорисованной марки
@@ -230,7 +220,7 @@ class _MapState extends State<Map> {
       _markers.add(
           Marker(
               markerId: MarkerId(widget._currentUid),
-              icon: _pinLocationIcon,
+              icon: readUser.get('status') == true ? _greenLocationIcon : _redLocationIcon,
               position: LatLng(
                   _currentLocation.latitude, _currentLocation.longitude),
               onTap: () {
@@ -301,7 +291,7 @@ class _MapState extends State<Map> {
                   }
                 }
                 );
-            });},
+              });},
             zoomGesturesEnabled: true,
             onCameraMove: _onCameraMove,
             myLocationEnabled: false,
@@ -447,11 +437,11 @@ class _MapState extends State<Map> {
                                     CrossAxisAlignment.center,
                                     children: [
                                       Container(
-                                      child: _dogStatus,
-                                          //     image: _dogStatus
-                                          // )
+                                        child: _dogStatus,
+                                        //     image: _dogStatus
+                                        // )
                                       ),
-                                          ],
+                                    ],
                                   ),
                                 ),
                               ],
@@ -570,4 +560,3 @@ class _MapState extends State<Map> {
     );
   }
 }
-

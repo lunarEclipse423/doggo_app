@@ -8,40 +8,38 @@ import 'package:flutter/src/painting/box_decoration.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
-class DogProfile extends StatefulWidget {
+class PersonProfile extends StatefulWidget {
   @override
-  _DogProfileState createState() => _DogProfileState();
+  _PersonProfileState createState() => _PersonProfileState();
 }
 
-class _DogProfileState extends State<DogProfile> {
+class _PersonProfileState extends State<PersonProfile> {
   String dogImageURL;
-  String _sex = "Мальчик";
-  String _breed = "Мальтезе";
-  String _age = "5";
+  String _personName = "Анастасия";
   String _description = "тут будет прекрасное описание собаки от хозяина";
 
   void initState() {
     super.initState();
-
+/*
     Reference storageReference = FirebaseStorage.instance
         .ref()
         .child('users/' + FirebaseAuth.instance.currentUser.uid + '/dogs/' +
         'Тян'
         + '/profile');
 
-    storageReference.getDownloadURL().then((loc) => setState(() => dogImageURL = loc));
+    storageReference.getDownloadURL().then((loc) => setState(() => dogImageURL = loc));*/
   }
 
-  void _onGoToPersonPressed() {
+  void _onBecomeFriendsButtonPressed() {
     setState(() {
-
+      //добавление в друзья СДЕЛАТЬ
     });
   }
 
   void _onOpenSettingsButtonPressed()
   {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/personProfile/', (route) => false);
+      //тут надо сделать открытие настроек
     });
   }
 
@@ -50,17 +48,17 @@ class _DogProfileState extends State<DogProfile> {
     return Scaffold(
         body: Stack(children: <Widget>[
           Container(
-            clipBehavior: Clip.hardEdge,
+            alignment: Alignment.topCenter,
             height: dogImageURL == null ?
-                    MediaQuery.of(context).size.height * 0.45 :
-                    MediaQuery.of(context).size.height * 0.6, // как раз таки относительное взятие размеров окна
+            MediaQuery.of(context).size.height * 0.45 :
+            MediaQuery.of(context).size.height * 0.6, // как раз таки относительное взятие размеров окна
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: dogImageURL == null ?
-                       AssetImage('assets/loading.gif') : // придумать, что делать, пока фото грузится
-                                                          // (может как-то использовать анимацию загрузки)
-                       NetworkImage(dogImageURL),
-                fit: dogImageURL == null ? BoxFit.none : BoxFit.cover,
+                AssetImage('assets/loading.gif') : // придумать, что делать, пока фото грузится
+                // (может как-то использовать анимацию загрузки)
+                NetworkImage(dogImageURL),
+                fit: dogImageURL == null ? BoxFit.none : BoxFit.fill,
               ),
             ),
           ),
@@ -79,7 +77,7 @@ class _DogProfileState extends State<DogProfile> {
                                     left: 42,
                                     top: 40,
                                     child: Text(
-                                      "Жусц", //!!!!!!!!!!!!!!!! тут должно быть имя из БД
+                                      _personName, //!!!!!!!!!!!!!!!! тут должно быть имя из БД
                                       style: TextStyle(
                                         color: Color(0xff47659e),
                                         fontSize: 28,
@@ -103,39 +101,10 @@ class _DogProfileState extends State<DogProfile> {
                                   ),
                                 ),
                                 Positioned(
-                                  left: 90,
+                                  left: 42,
                                   top: 120,
                                   child: Text(
-                                    "Мальтезе", //!!!!!!!!!!!!!!!! тут должна быть порода из БД
-                                    style: TextStyle(
-                                      color: Color(0xff47659e),
-                                      fontSize: 18,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.26,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 90,
-                                  top: 140,
-                                  child: Text(
-                                    _age +
-                                        " лет", //!!!!!!!!!!!!!!!! тут должен быть возраст из БД
-                                    style: TextStyle(
-                                      color: Color(0xff47659e),
-                                      fontSize: 18,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.26,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 252,
-                                  top: 130,
-                                  child: Text(
-                                    "мальчик", //!!!!!!!!!!!!!!!! тут должен быть пол из БД
+                                    "Питомцы",
                                     style: TextStyle(
                                       color: Color(0xff47659e),
                                       fontSize: 18,
@@ -146,102 +115,7 @@ class _DogProfileState extends State<DogProfile> {
                                   ),
                                 ),
                                 //дальше иконки
-                                Positioned(
-                                  left: 36,
-                                  top: 118,
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 44,
-                                          height: 44,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(21),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Color(0xffffffff),
-                                                blurRadius: 7,
-                                                offset: Offset(-4, -4),
-                                              ),
-                                              BoxShadow(
-                                                color: Color(0x3f000000),
-                                                blurRadius: 10,
-                                                offset: Offset(4, 4),
-                                              ),
-                                            ],
-                                            color: Color(0xfffbfbfb),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                child: Center(
-                                                    child: Icon(Ionicons.ios_paw,
-                                                        size: 35,
-                                                        color: Color(0xff48659e))),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
 
-                                Positioned(
-                                  left: 198,
-                                  top: 118,
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(21),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0xffffffff),
-                                            blurRadius: 7,
-                                            offset: Offset(-4, -4),
-                                          ),
-                                          BoxShadow(
-                                            color: Color(0x3f000000),
-                                            blurRadius: 10,
-                                            offset: Offset(4, 4),
-                                          ),
-                                        ],
-                                        color: Color(0xfffbfbfb),
-                                      ),
-                                      child: Container(
-                                          child: Stack(children: [
-                                            Positioned(
-                                                top: 10,
-                                                right: 17,
-                                                child: Container(
-                                                    child: Icon(Boxicons.bx_female_sign,
-                                                        size: 23,
-                                                        color: Color(0xff48659e)))),
-                                            Positioned(
-                                                top: 10,
-                                                left: 17,
-                                                child: Transform.rotate(
-                                                    angle: -0.79,
-                                                    child: Icon(Boxicons.bx_male_sign,
-                                                        size: 23,
-                                                        color: Color(0xff48659e))))
-                                          ], overflow: Overflow.visible)),
-                                    ),
-                                  ),
-                                ),
                                 Positioned(
                                   left: 40,
                                   top: 72,
@@ -271,7 +145,7 @@ class _DogProfileState extends State<DogProfile> {
                                   right: 22,
                                   top: 35,
                                   child: IconButton(icon: const Icon(FluentIcons.settings_24_regular, color: Color(0xff48659e)),
-                                    iconSize: 40,
+                                      iconSize: 40,
                                       onPressed: _onOpenSettingsButtonPressed
                                   ),
                                 ),
@@ -294,7 +168,7 @@ class _DogProfileState extends State<DogProfile> {
                             width: MediaQuery.of(context).size.width / 1.15,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: _onGoToPersonPressed,
+                              onPressed: _onBecomeFriendsButtonPressed,
                               style: ButtonStyle(
                                   backgroundColor:
                                   MaterialStateProperty.all(Color(0xff789fff)),

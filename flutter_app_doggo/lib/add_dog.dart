@@ -1,11 +1,16 @@
 import 'dart:ui';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class AddDogWindow extends StatefulWidget {
   @override
@@ -20,36 +25,103 @@ class _AddDogWindowState extends State<AddDogWindow> {
   final _formKey = GlobalKey<FormState>();
   String dropdownValue = "";
   String selectedValue = "выбери породу";
-  int number;
+
+  File dogImage;
+  String dogImageURL;
+  String dogName;
+  String dogSex;
+  int dogAge;
+  String dogBreed;
+  String description;
 
   final List<DropdownMenuItem> items = [];
+  List<Widget> buttonList = [
+    Icon(MaterialIcons.add_a_photo,
+        color: Color(0x7f789fff), size: 80),
+    SizedBox(height: 10.67),
+    Text(
+      "добавить фото",
+      style: TextStyle(
+        color: Color(0xb248659e),
+        fontSize: 12,
+        fontFamily: "Roboto",
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.84,
+      ),
+    ),
+  ];
 
-  @override
-  void initState() {
-    items.add(DropdownMenuItem(
-      child: Text("Мальтезе"),
-      value: "Мальтезе",
-    ));
-    items.add(DropdownMenuItem(
-      child: Text("Чихуахуа"),
-      value: "Чихуахуа",
-    ));
-    items.add(DropdownMenuItem(
-      child: Text("Лабрадорчик"),
-      value: "Лабрадорчик",
-    ));
-    super.initState();
-  }
+  void _fillList() async {
+    List<String> breeds = (await rootBundle.loadString('assets/breeds.txt')).split('\n');
 
-  void _onAddPhotoButtonPressed() {
-    setState(() {
-      //тут надо сделать добавление фото в БД
+    breeds.forEach((breed) {
+      items.add(DropdownMenuItem(
+        child: Text(breed),
+        value: breed,
+      ));
     });
   }
 
-  void _onAddDogButtonPressed() {
+  @override
+  void initState() {
+    _fillList();
+
+    super.initState();
+  }
+
+  void _onAddPhotoButtonPressed() async {
+    ImagePicker picker = ImagePicker();
+    PickedFile pickedFile;
+
+    pickedFile = await picker.getImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      dogImage = File(pickedFile.path);
+    }
+    else {
+      print('No image selected.');
+    }
+
     setState(() {
-      //!!!!!!!!!!!!!!! тут надо сделать добавление собаки в БД (с привязкой к юзеру)
+      if (dogImage != null) {
+        buttonList = List<Widget>.filled(1,
+            Container(
+              alignment: Alignment.center,
+              height: 125,
+              width: 125,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: FileImage(dogImage),
+                  fit: BoxFit.cover,
+                ),
+                borderRadius: BorderRadius.circular(30),
+              ),
+            )
+        );
+      }
+    });
+  }
+
+  void _onAddDogButtonPressed() async {
+    Reference storageReference = FirebaseStorage.instance
+        .ref()
+        .child('users/' + FirebaseAuth.instance.currentUser.uid + '/dogs/' + dogName + '/profile');
+
+    UploadTask uploadTask = storageReference.putFile(dogImage);
+    print('File Uploaded');
+
+    await storageReference.getDownloadURL().then((fileURL) {
+      dogImageURL =  fileURL;
+    });
+
+    setState(() {
+      FirebaseFirestore.instance.collection('users')
+          .doc(FirebaseAuth.instance.currentUser.uid)
+          .collection('dogs')
+          .doc(dogName).set(
+            {'name': dogName, 'sex': dogSex, 'age': dogAge, 'breed': dogBreed, 'dogImage': dogImageURL, 'description' : description}
+          );
+
       Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
     });
   }
@@ -135,29 +207,13 @@ class _AddDogWindowState extends State<AddDogWindow> {
                     color: Color(0xfffbfbfb),
                   ),
                   child:*/
-
-                                    Column(
+                                Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(MaterialIcons.add_a_photo,
-                                        color: Color(0x7f789fff), size: 80),
-                                    SizedBox(height: 10.67),
-                                    Text(
-                                      "добавить фото",
-                                      style: TextStyle(
-                                        color: Color(0xb248659e),
-                                        fontSize: 12,
-                                        fontFamily: "Roboto",
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: 0.84,
-                                      ),
-                                    ),
-                                  ],
+                                  children: buttonList,
                                 ),
                               ),
                             ),
-                            // ),
                             SizedBox(height: 38.67),
                             Container(
                               width: 300,
@@ -200,6 +256,10 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                   border: UnderlineInputBorder(),
                                 ),
+                                onChanged: (value)
+                                {
+                                  dogName = value;
+                                },
                               ),
                             ),
                             SizedBox(height: 30.67),
@@ -226,19 +286,18 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                         onPressed: () => setState(() =>
                                         {
                                           if (!_pressedButtonMale)
-                                        {
-                                          if (!_pressedButtonFemale)
+                                          {
+                                            if (!_pressedButtonFemale)
                                             {
-                                              _pressedButtonFemale = ! _pressedButtonFemale,
-                                            }
-                                        //!!!!!!!!!! добавить в БД женский пол
-                                        }
-                                            else
-                                            {
+                                              _pressedButtonFemale = !_pressedButtonFemale,
+                                            },
+                                          }
+                                          else
+                                          {
                                             _pressedButtonFemale = !_pressedButtonFemale,
                                             _pressedButtonMale = ! _pressedButtonMale,
-                                            },
-
+                                          },
+                                          dogSex = "Female",
                                         }),
                                         /*   //elevation: MaterialStateProperty.all(20),
                                           // side: MaterialStateProperty.all(BorderSide(width: 155, style: BorderStyle.none, color: Color(0xff789fff))),
@@ -359,19 +418,18 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                           onPressed: () => setState(() =>
                                           {
                                             if (!_pressedButtonFemale)
+                                            {
+                                              if (!_pressedButtonMale)
                                               {
-                                                if (!_pressedButtonMale)
-                                                  {
-                                                    _pressedButtonMale =
-                                                    !_pressedButtonMale
-                                                  }
-                                                //!!!!!!!!!! добавить в БД мужской пол
+                                                _pressedButtonMale = !_pressedButtonMale
                                               }
+                                            }
                                             else
-                                              {
-                                                _pressedButtonMale = ! _pressedButtonMale,
-                                                _pressedButtonFemale = !_pressedButtonFemale
-                                              }
+                                            {
+                                              _pressedButtonMale = ! _pressedButtonMale,
+                                              _pressedButtonFemale = !_pressedButtonFemale
+                                            },
+                                            dogSex = "Male",
                                           }),
                                           style: _pressedButtonMale
                                               ? ButtonStyle(
@@ -457,9 +515,60 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                   border: UnderlineInputBorder(),
                                 ),
+                                onChanged: (value)
+                                {
+                                  dogAge = int.parse(value);
+                                },
                               ),
                             ),
-
+                            SizedBox(height: 15.67),
+                            Container(
+                              width: 300,
+                              child: TextFormField(
+                                validator: (value) {
+                                  if (value.isEmpty) {
+                                    return "please enter your dog's description :)";
+                                  }
+                                },
+                                style: TextStyle(
+                                  color: Color(0xff2c4880),
+                                  fontSize: 15,
+                                  fontFamily: "Roboto",
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.84,
+                                ),
+                                decoration: InputDecoration(
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    borderSide: BorderSide(
+                                      color: Color(0xff2c4880),
+                                    ),
+                                  ),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderRadius: BorderRadius.circular(0),
+                                    borderSide: BorderSide(
+                                      color: Color(0xb248659e),
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  hoverColor: Color(0xb248659e),
+                                  focusColor: Color(0xb248659e),
+                                  labelText: "  здесь расскажи о твоей собачке :)",
+                                  labelStyle: TextStyle(
+                                    color: Color(0xb248659e),
+                                    fontSize: 12,
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.84,
+                                  ),
+                                  border: UnderlineInputBorder(),
+                                ),
+                                onChanged: (value)
+                                {
+                                  description = value;
+                                },
+                              ),
+                            ),
                             SizedBox(height: 30.67),
                             Container(
                               width: 300,
@@ -495,7 +604,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                 dialogBox: false,
                                 isExpanded: true,
                                 menuConstraints:
-                                    BoxConstraints.tight(Size.fromHeight(400)),
+                                BoxConstraints.tight(Size.fromHeight(400)),
                                 closeButton: "Закрыть",
                                 displayClearIcon: false,
                                 icon: const Icon(EvaIcons.arrowIosDownward,
@@ -511,7 +620,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                 value: selectedValue,
                                 onChanged: (value) {
                                   setState(() {
-                                    //selectedValue = value;
+                                    dogBreed = value;
                                   });
                                 },
                               ),
