@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -9,39 +10,65 @@ import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
 class DogProfile extends StatefulWidget {
+  final String _currentUid;
+  final String _dogName;
+  DogProfile(String uid, String uidDog):_currentUid = uid, _dogName = uidDog;
   @override
   _DogProfileState createState() => _DogProfileState();
 }
 
 class _DogProfileState extends State<DogProfile> {
-  String dogImageURL;
-  String _sex = "Мальчик";
-  String _breed = "Мальтезе";
-  String _age = "5";
-  String _description = "тут будет прекрасное описание собаки от хозяина";
+
+  String _name = "";
+  String _dogImageURL;
+  String _sex = "";
+  String _breed = "";
+  String _age = "";
+  String _description = "";
 
   void initState() {
     super.initState();
+    _getDogData();
 
-    Reference storageReference = FirebaseStorage.instance
-        .ref()
-        .child('users/' + FirebaseAuth.instance.currentUser.uid + '/dogs/' +
-        'Тян'
-        + '/profile');
+  }
 
-    storageReference.getDownloadURL().then((loc) => setState(() => dogImageURL = loc));
+  void _getDogData() async
+  {
+     final DocumentSnapshot dog = await FirebaseFirestore.instance.collection('users')
+        .doc(widget._currentUid)
+        .collection('dogs')
+        .doc(widget._dogName).get();
+     if(mounted) {
+       _name = dog.get('name');
+       _sex = dog.get('sex') == 'Female' ? 'Девочка' : 'Мальчик';
+       _breed = dog.get('breed');
+       _age = dog.get('age').toString();
+       _description = dog.get('description');
+       Reference storageReference = FirebaseStorage.instance
+           .ref()
+           .child('users/' + widget._currentUid + '/dogs/' +
+           widget._dogName
+           + '/profile');
+       await storageReference.getDownloadURL().then((loc) => setState(() => _dogImageURL = loc));
+     }
+
   }
 
   void _onGoToPersonPressed() {
     setState(() {
-
+      if (widget._currentUid == FirebaseAuth.instance.currentUser.uid) {
+        Navigator.pushNamed(context, '/personProfile/${widget._currentUid}');
+      }
+      else {
+        Navigator.pushNamed(context, '/personProfileView/${widget._currentUid}');
+      }
     });
   }
 
   void _onOpenSettingsButtonPressed()
   {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/personProfile/', (route) => false);
+      Navigator.pushNamed(context, '/dogSettings/${widget._currentUid}/${widget._dogName}');
     });
   }
 
@@ -51,16 +78,16 @@ class _DogProfileState extends State<DogProfile> {
         body: Stack(children: <Widget>[
           Container(
             clipBehavior: Clip.hardEdge,
-            height: dogImageURL == null ?
+            height: _dogImageURL == null ?
                     MediaQuery.of(context).size.height * 0.45 :
                     MediaQuery.of(context).size.height * 0.6, // как раз таки относительное взятие размеров окна
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: dogImageURL == null ?
-                       AssetImage('assets/loading.gif') : // придумать, что делать, пока фото грузится
+                image: _dogImageURL == null ?
+                       AssetImage('assets/icon.png') : // придумать, что делать, пока фото грузится
                                                           // (может как-то использовать анимацию загрузки)
-                       NetworkImage(dogImageURL),
-                fit: dogImageURL == null ? BoxFit.none : BoxFit.cover,
+                       NetworkImage(_dogImageURL),
+                fit: _dogImageURL == null ? BoxFit.none : BoxFit.cover,
               ),
             ),
           ),
@@ -79,7 +106,7 @@ class _DogProfileState extends State<DogProfile> {
                                     left: 42,
                                     top: 40,
                                     child: Text(
-                                      "Жусц", //!!!!!!!!!!!!!!!! тут должно быть имя из БД
+                                      _name, //!!!!!!!!!!!!!!!! тут должно быть имя из БД
                                       style: TextStyle(
                                         color: Color(0xff47659e),
                                         fontSize: 28,
@@ -105,8 +132,8 @@ class _DogProfileState extends State<DogProfile> {
                                 Positioned(
                                   left: 90,
                                   top: 120,
-                                  child: Text(
-                                    "Мальтезе", //!!!!!!!!!!!!!!!! тут должна быть порода из БД
+                                    child : Text(
+                                    _breed, //!!!!!!!!!!!!!!!! тут должна быть порода из БД
                                     style: TextStyle(
                                       color: Color(0xff47659e),
                                       fontSize: 18,
@@ -120,8 +147,7 @@ class _DogProfileState extends State<DogProfile> {
                                   left: 90,
                                   top: 140,
                                   child: Text(
-                                    _age +
-                                        " лет", //!!!!!!!!!!!!!!!! тут должен быть возраст из БД
+                                    _age, //!!!!!!!!!!!!!!!! тут должен быть возраст из БД
                                     style: TextStyle(
                                       color: Color(0xff47659e),
                                       fontSize: 18,
@@ -135,7 +161,7 @@ class _DogProfileState extends State<DogProfile> {
                                   left: 252,
                                   top: 130,
                                   child: Text(
-                                    "мальчик", //!!!!!!!!!!!!!!!! тут должен быть пол из БД
+                                    _sex, //!!!!!!!!!!!!!!!! тут должен быть пол из БД
                                     style: TextStyle(
                                       color: Color(0xff47659e),
                                       fontSize: 18,
@@ -266,15 +292,18 @@ class _DogProfileState extends State<DogProfile> {
                                           letterSpacing: 1.26,
                                         ),
                                       ),
-                                    )),
-                                Positioned(
+                                    )
+                                ),
+                                widget._currentUid == FirebaseAuth.instance.currentUser.uid
+                                    ? Positioned(
                                   right: 22,
                                   top: 35,
                                   child: IconButton(icon: const Icon(FluentIcons.settings_24_regular, color: Color(0xff48659e)),
-                                    iconSize: 40,
+                                      iconSize: 40,
                                       onPressed: _onOpenSettingsButtonPressed
                                   ),
-                                ),
+                                )
+                                    : Container(),
                               ],
                             ),
                             height: constraints.maxHeight * 0.45, // высота блока информации в профиле

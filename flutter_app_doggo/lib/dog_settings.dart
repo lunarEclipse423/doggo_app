@@ -13,21 +13,26 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:image_crop/image_crop.dart';
 
-class AddDogWindow extends StatefulWidget {
+class DogSettings extends StatefulWidget {
   final String _currentUid;
-  AddDogWindow({String uid}):_currentUid = uid;
+  final String _dogID;
+  DogSettings(String uid, String uidDog):
+        _currentUid = uid,
+        _dogID = uidDog;
   @override
-  _AddDogWindowState createState() => _AddDogWindowState();
+  _DogSettingsState createState() => _DogSettingsState();
 }
 
 enum Gender { male, female }
 
-class _AddDogWindowState extends State<AddDogWindow> {
-  bool _pressedButtonFemale = true;
+class _DogSettingsState extends State<DogSettings> {
+  bool _pressedButtonFemale = false;
   bool _pressedButtonMale = false;
   final _formKey = GlobalKey<FormState>();
   String dropdownValue = "";
   String selectedValue = "выбери породу";
+
+  String _dogImageURL;
 
   bool isPicked = false;
   bool isCropped = false;
@@ -36,18 +41,17 @@ class _AddDogWindowState extends State<AddDogWindow> {
   File sampleImage;
   File dogImage;
 
-  String dogImageURL;
-  String dogName;
-  String dogSex = "Female";
-  int dogAge;
-  String dogBreed;
-  String description;
+  String _name = "";
+  String _sex = "";
+  int _age;
+  String _breed = "";
+  String _description = "";
 
   final List<DropdownMenuItem> items = [];
   List<Widget> buttonList = [
     Icon(MaterialIcons.add_a_photo,
-        color: Color(0x7f789fff),
-        size: 80,
+      color: Color(0x7f789fff),
+      size: 80,
     ),
     SizedBox(
         height: 10.67
@@ -64,6 +68,49 @@ class _AddDogWindowState extends State<AddDogWindow> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+
+    _getDogData();
+    _fillList();
+  }
+
+  void _getDogData() async {
+    final DocumentSnapshot dog = await FirebaseFirestore.instance.collection('users')
+        .doc(widget._currentUid)
+        .collection('dogs')
+        .doc(widget._dogID).get();
+
+    _name = dog.get('name');
+    _sex = dog.get('sex') == 'Female' ? 'Девочка' : 'Мальчик';
+
+    if(_sex == 'Female') {
+      _pressedButtonFemale = true;
+      _pressedButtonMale = false;
+    }
+    else {
+      _pressedButtonFemale = false;
+      _pressedButtonMale = true;
+    }
+
+    _breed = dog.get('breed');
+    selectedValue = _breed;
+
+    _age = dog.get('age');
+    _description = dog.get('description');
+
+    Reference storageReference = FirebaseStorage.instance
+        .ref()
+        .child('users/' + widget._currentUid + '/dogs/' + widget._dogID + '/profile');
+
+    await storageReference.getDownloadURL().then((fileURL) {
+      _dogImageURL =  fileURL;
+    });
+
+    setState(() {});
+  }
+
   void _fillList() async {
     List<String> breeds = (await rootBundle.loadString('assets/breeds.txt')).split('\n');
 
@@ -73,13 +120,6 @@ class _AddDogWindowState extends State<AddDogWindow> {
         value: breed,
       ));
     });
-  }
-
-  @override
-  void initState() {
-    _fillList();
-
-    super.initState();
   }
 
   void _onAddPhotoButtonPressed() async {
@@ -115,48 +155,24 @@ class _AddDogWindowState extends State<AddDogWindow> {
     });
   }
 
-  void _onAddDogButtonPressed() async {
-    DocumentReference newDog = FirebaseFirestore.instance.collection('users')
-        .doc(widget._currentUid)
-        .collection('dogs')
-        .doc();
-
+  void _onSaveSettingsButton() async {
     Reference storageReference = FirebaseStorage.instance
         .ref()
-        .child('users/' + widget._currentUid + '/dogs/' + newDog.id + '/profile');
+        .child('users/' + widget._currentUid + '/dogs/' + widget._dogID + '/profile');
 
-    UploadTask uploadTask = storageReference.putFile(dogImage);
-    print('File Uploaded');
-
-    bool isException = true;
-
-    do
-    {
-      try {
-        await storageReference.getDownloadURL().then((fileURL) {
-          dogImageURL =  fileURL;
-        });
-
-        isException = false;
-      }
-      on Exception catch (e) {
-        print('smth wrong');
-      }
-    } while (isException);
+    if (dogImage != null) {
+      UploadTask uploadTask = storageReference.putFile(dogImage);
+      print('File Uploaded');
+    }
 
     setState(() {
-
-      newDog.set(
-            {
-              'name': dogName,
-              'sex': dogSex,
-              'age': dogAge,
-              'breed': dogBreed,
-              'dogImage': dogImageURL,
-              'description' : description,
-              'isWalking' : false
-            }
-          );
+      FirebaseFirestore.instance.collection('users')
+          .doc(widget._currentUid)
+          .collection('dogs')
+          .doc(widget._dogID)
+          .update(
+            {'name': _name, 'sex': _sex, 'age': _age, 'breed': _breed, 'description' : _description}
+      );
 
       Navigator.pushNamedAndRemoveUntil(context, '/map/${widget._currentUid}', (route) => false);
     });
@@ -231,13 +247,23 @@ class _AddDogWindowState extends State<AddDogWindow> {
                         child: Column(
                           children: [
                             Text(
-                              "Время добавить вашу собачку!",
+                              "НАСТРОЙКИ",
                               style: TextStyle(
                                 color: Color(0xff48659e),
-                                fontSize: 17,
+                                fontSize: 24,
                                 fontFamily: "Roboto",
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.98,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.54,
+                              ),
+                            ),
+                            Text(
+                              "профиля собаки",
+                              style: TextStyle(
+                                color: Color(0xb248659e),
+                                fontSize: 20,
+                                fontFamily: "Roboto",
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.26,
                               ),
                             ),
                             SizedBox(height: 38.67),
@@ -245,49 +271,76 @@ class _AddDogWindowState extends State<AddDogWindow> {
                               width: 150,
                               height: 150,
                               child: ElevatedButton(
-                                onPressed: _onAddPhotoButtonPressed,
-                                style: ButtonStyle(
+                                  style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty.all(
                                         Color(0xfffbfbfb)),
                                     foregroundColor: MaterialStateProperty.all(
                                       Color(0xfffbfbfb),
                                     ),
                                     overlayColor: MaterialStateProperty.all(
-                                        Color(0xfffbfbfb)
-                                    ),
+                                        Color(0xfffbfbfb)),
                                     shadowColor: MaterialStateProperty.all(
-                                        Color(0xfffbfbfb)
-                                    ),
+                                        Color(0xfffbfbfb)),
                                     //elevation: MaterialStateProperty.all(20),
-                                    side: MaterialStateProperty.all(
-                                        BorderSide(
-                                          width: 155,
-                                          style: BorderStyle.none,
-                                          color: Color(0xfffbfbfb)
-                                        )
-                                    ),
+                                    side: MaterialStateProperty.all(BorderSide(
+                                        width: 155,
+                                        style: BorderStyle.none,
+                                        color: Color(0xfffbfbfb))),
                                     enableFeedback: false,
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
+                                    shape: MaterialStateProperty.all<
+                                        RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                        side: BorderSide(
+                                            color: Color(0x59c2d1f5)),
+                                      ),
+                                    ),
+                                  ),
+                                  onPressed: _onAddPhotoButtonPressed,
+                                  child: Column(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          alignment: Alignment.center,
+                                          height: 125,
+                                          width: 125,
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: (_dogImageURL == null && dogImage == null
+                                                  ? AssetImage('assets/sleep_dog.gif')
+                                                  : (dogImage == null
+                                                    ? NetworkImage(_dogImageURL)
+                                                    : FileImage(dogImage))
+                                              ),
+                                              fit: BoxFit.cover,
+                                            ),
                                             borderRadius:
                                             BorderRadius.circular(30),
-                                            side: BorderSide(
-                                                color: Color(0x59c2d1f5)
-                                            ),
+                                          ),
                                         ),
-                                    ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: buttonList,
-                                ),
+                                      ])),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              "изменить фото",
+                              style: TextStyle(
+                                color: Color(0xb248659e),
+                                fontSize: 12,
+                                fontFamily: "Roboto",
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.84,
                               ),
                             ),
                             SizedBox(height: 38.67),
                             Container(
                               width: 300,
                               child: TextFormField(
+                                controller: TextEditingController(
+                                  text: _name
+                                ),
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return "please enter your dog's name :)";
@@ -295,7 +348,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                 },
                                 style: TextStyle(
                                   color: Color(0xff2c4880),
-                                  fontSize: 15,
+                                  fontSize: 12,
                                   fontFamily: "Roboto",
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 0.84,
@@ -316,24 +369,23 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                   hoverColor: Color(0xb248659e),
                                   focusColor: Color(0xb248659e),
-                                  labelText: "  имя собаки",
+                                  labelText: "имя собаки",
                                   labelStyle: TextStyle(
                                     color: Color(0xb248659e),
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     fontFamily: "Roboto",
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: 0.84,
                                   ),
-                                  border: UnderlineInputBorder(),
                                 ),
                                 onChanged: (value) {
-                                  dogName = value;
+                                  _name = value;
                                 },
                               ),
                             ),
-                            SizedBox(height: 30.67),
+                            SizedBox(height: 30),
                             Text(
-                              "выберите пол собаки",
+                              "измените пол собаки",
                               style: TextStyle(
                                 color: Color(0xb248659e),
                                 fontSize: 12,
@@ -368,7 +420,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                                       _pressedButtonFemale = !_pressedButtonFemale,
                                                       _pressedButtonMale = ! _pressedButtonMale,
                                                     },
-                                                  dogSex = "Female",
+                                                  _sex = "Female",
                                                 }),
                                                 style: _pressedButtonFemale
                                                     ? ButtonStyle(
@@ -435,7 +487,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                                       _pressedButtonMale = ! _pressedButtonMale,
                                                       _pressedButtonFemale = !_pressedButtonFemale
                                                     },
-                                                  dogSex = "Male",
+                                                  _sex = "Male",
                                                 }),
                                                 style: _pressedButtonMale
                                                     ? ButtonStyle(
@@ -480,10 +532,13 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                 ]
                             ),
-                            SizedBox(height: 11.67),
+                            SizedBox(height: 30),
                             Container(
                               width: 300,
                               child: TextFormField(
+                                controller: TextEditingController(
+                                    text: _age.toString(),
+                                ),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value.isEmpty) {
@@ -517,7 +572,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                   hoverColor: Color(0xb248659e),
                                   focusColor: Color(0xb248659e),
-                                  labelText: "  возраст собаки",
+                                  labelText: "возраст собаки",
                                   labelStyle: TextStyle(
                                     color: Color(0xb248659e),
                                     fontSize: 12,
@@ -525,10 +580,9 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: 0.84,
                                   ),
-                                  border: UnderlineInputBorder(),
                                 ),
                                 onChanged: (value) {
-                                  dogAge = int.parse(value);
+                                  _age = int.parse(value);
                                 },
                               ),
                             ),
@@ -536,6 +590,11 @@ class _AddDogWindowState extends State<AddDogWindow> {
                             Container(
                               width: 300,
                               child: TextFormField(
+                                maxLines: 5,
+                                textAlign: TextAlign.left,
+                                controller: TextEditingController(
+                                    text: _description,
+                                ),
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return "please enter your dog's description :)";
@@ -555,8 +614,8 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                       color: Color(0xff2c4880),
                                     ),
                                   ),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderRadius: BorderRadius.circular(0),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide(
                                       color: Color(0xb248659e),
                                       width: 1.0,
@@ -564,7 +623,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   ),
                                   hoverColor: Color(0xb248659e),
                                   focusColor: Color(0xb248659e),
-                                  labelText: "  здесь расскажи о твоей собачке :)",
+                                  labelText: "здесь расскажи о твоей собачке :)",
                                   labelStyle: TextStyle(
                                     color: Color(0xb248659e),
                                     fontSize: 12,
@@ -572,10 +631,9 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: 0.84,
                                   ),
-                                  border: UnderlineInputBorder(),
                                 ),
                                 onChanged: (value) {
-                                  description = value;
+                                  _description = value;
                                 },
                               ),
                             ),
@@ -626,7 +684,8 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                 value: selectedValue,
                                 onChanged: (value) {
                                   setState(() {
-                                    dogBreed = value;
+                                    selectedValue = value;
+                                    _breed = value;
                                   });
                                 },
                               ),
@@ -639,7 +698,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                 onPressed: () {
                                   final form = _formKey.currentState;
                                   if (form.validate()) {
-                                    _onAddDogButtonPressed();
+                                    _onSaveSettingsButton();
                                   }
                                 },
                                 style: ButtonStyle(
@@ -667,7 +726,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   //shape: MaterialStateProperty.all(O)
                                 ),
                                 child: Text(
-                                  "Добавить любимца",
+                                  "Сохранить настройки",
                                   style: TextStyle(
                                     color: Color(0xfffbfbfb),
                                     fontSize: 18,
@@ -675,54 +734,6 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-                            SizedBox(
-                              width: 300,
-                              height: 55,
-                              child: ElevatedButton(
-                                  onPressed: _onNotAddDogButtonPressed,
-                                  style: ButtonStyle(
-                                      backgroundColor:
-                                      MaterialStateProperty.all(
-                                          Color(0xffee870d)),
-                                      foregroundColor:
-                                      MaterialStateProperty.all(
-                                        Color(0xffee870d),
-                                      ),
-                                      overlayColor: MaterialStateProperty.all(
-                                          Color(0xffee870d)
-                                      ),
-                                      shadowColor: MaterialStateProperty.all(
-                                          Color(0xffee870d)
-                                      ),
-                                      side: MaterialStateProperty.all(
-                                          BorderSide(
-                                              width: 155,
-                                              style: BorderStyle.none,
-                                              color: Color(0xffee870d))),
-                                      enableFeedback: false,
-                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(22),
-                                              side: BorderSide(
-                                                  color: Color(0xffee870d)
-                                              )
-                                          )
-                                      )
-                                    //shape: MaterialStateProperty.all(O)
-                                  ),
-                                  child: Text(
-                                    "Не сейчас...",
-                                    style: TextStyle(
-                                      color: Color(0xfffbfbfb),
-                                      fontSize: 18,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  )
                               ),
                             ),
                           ],
@@ -762,14 +773,4 @@ class _AddDogWindowState extends State<AddDogWindow> {
       ],
     );
   }
-}
-
-class ChooseBreedWindow extends StatefulWidget {
-  @override
-  _ChooseBreedWindowState createState() => _ChooseBreedWindowState();
-}
-
-class _ChooseBreedWindowState extends State<ChooseBreedWindow> {
-  @override
-  Widget build(BuildContext context) {}
 }

@@ -10,18 +10,18 @@ import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 
-class PersonProfile extends StatefulWidget {
+class PersonProfileView extends StatefulWidget {
   final String _currentUid;
 
-  PersonProfile({String uid}) : _currentUid = uid;
+  PersonProfileView({String uid}) : _currentUid = uid;
 
   @override
-  _PersonProfileState createState() => _PersonProfileState();
+  _PersonProfileViewState createState() => _PersonProfileViewState();
 }
 
-class _PersonProfileState extends State<PersonProfile> {
+class _PersonProfileViewState extends State<PersonProfileView> {
   String _personImageURL;
-  String _personName = ' ';
+  String _personName = 'Анастасия';
 
   bool _isWalking = false;
 
@@ -34,8 +34,7 @@ class _PersonProfileState extends State<PersonProfile> {
   }
 
   void _fillFields() async {
-    DocumentSnapshot user = await FirebaseFirestore.instance
-        .collection('users')
+    DocumentSnapshot user = await FirebaseFirestore.instance.collection('users')
         .doc(widget._currentUid)
         .get();
 
@@ -48,12 +47,9 @@ class _PersonProfileState extends State<PersonProfile> {
         .ref()
         .child('users/' + widget._currentUid + '/profile');
 
-    await storageReference
-        .getDownloadURL()
-        .then((fileURL) => setState(() => personImageURL = fileURL));
+    await storageReference.getDownloadURL().then((fileURL) => setState(() => personImageURL = fileURL));
 
-    QuerySnapshot dogsCollection = await FirebaseFirestore.instance
-        .collection('users')
+    QuerySnapshot dogsCollection = await FirebaseFirestore.instance.collection('users')
         .doc(widget._currentUid)
         .collection('dogs')
         .get();
@@ -77,12 +73,13 @@ class _PersonProfileState extends State<PersonProfile> {
       String dogName = element.get('name');
 
       String dogImageURL = '';
-      Reference storageReference = FirebaseStorage.instance.ref().child(
-          'users/' + widget._currentUid + '/dogs/' + element.id + '/profile');
+      Reference storageReference = FirebaseStorage.instance
+          .ref()
+          .child('users/' + widget._currentUid + '/dogs/'
+          + dogName
+          + '/profile');
 
-      await storageReference
-          .getDownloadURL()
-          .then((fileURL) => setState(() => dogImageURL = fileURL));
+      await storageReference.getDownloadURL().then((fileURL) => setState(() => dogImageURL = fileURL));
 
       String dogBreed = element.get('breed');
       String dogSex = element.get('sex');
@@ -127,29 +124,28 @@ class _PersonProfileState extends State<PersonProfile> {
                           Container(
                             // alignment: Alignment.center,
                             margin: EdgeInsets.fromLTRB(0, 1, 0, 0),
-                            child: Icon(Ionicons.ios_paw,
-                                color:
-                                Color(_isWalking ? 0xff4f9567 : 0xffb60040),
-                                size: 20),
+                            child: Icon(
+                                Ionicons.ios_paw,
+                                color: Color(
+                                    _isWalking ? 0xff4f9567 : 0xffb60040
+                                ),
+                                size: 20
+                            ),
                           )
                         ]),
                         SizedBox(height: 6),
-                        Flexible(
-                            child: Text(
-                              dogBreed,
-                              style: TextStyle(
-                                color: Color(0xff48659e),
-                                fontSize: 15,
-                                fontFamily: "Roboto",
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.98,
-                              ),
-                            )
+                        Text(
+                          dogBreed,
+                          style: TextStyle(
+                            color: Color(0xff48659e),
+                            fontSize: 15,
+                            fontFamily: "Roboto",
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.98,
+                          ),
                         ),
                         Text(
-                          (dogSex == "Male" ? "мальчик, " : "девочка, ") +
-                              dogAge +
-                              " лет",
+                          (dogSex == "Male" ? "мальчик, " : "девочка, ") + dogAge + " лет",
                           style: TextStyle(
                             color: Color(0xff48659e),
                             fontSize: 15,
@@ -170,9 +166,9 @@ class _PersonProfileState extends State<PersonProfile> {
     return dogs;
   }
 
-  void _onOpenSettingsButtonPressed() {
+  void _onUserChatButtonPressed() {
     setState(() {
-      Navigator.pushNamed(context, '/humanSettings/${widget._currentUid}/dog');
+      //тут надо сделать открытие чата с КОНКРЕТНЫМ пользователем
     });
   }
 
@@ -184,9 +180,7 @@ class _PersonProfileState extends State<PersonProfile> {
 
   void _onMapButtonPressed() {
     setState(() {
-      Navigator.pushNamed(
-          context,
-          '/map/' + widget._currentUid,); // изменил, т.к. мы задаем в итоге новый виджет карты,
+      Navigator.pushNamed(context, '/map/' + FirebaseAuth.instance.currentUser.uid); // изменил, т.к. мы задаем в итоге новый виджет карты,
       // у которой уже нет ID пользователя
     });
   }
@@ -200,8 +194,8 @@ class _PersonProfileState extends State<PersonProfile> {
             children: <Widget>[
               Positioned(
                 // bottom: 10,
-                child: Container(
-                  //alignment: Alignment.topCenter,
+                child:
+                Container(
                   height: _personImageURL == null
                       ? MediaQuery.of(context).size.height * 0.45
                       : MediaQuery.of(context).size.height *
@@ -209,105 +203,111 @@ class _PersonProfileState extends State<PersonProfile> {
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: _personImageURL == null
-                          ? AssetImage('assets/sleep_dog.gif')
-                          : NetworkImage(
-                          _personImageURL), // придумать, что делать, пока фото грузится
+                          ? AssetImage('assets/loading.gif')
+                          : NetworkImage(_personImageURL),
+                      // придумать, что делать, пока фото грузится
                       // (может как-то использовать анимацию загрузки)
-                      fit: _personImageURL == null ? BoxFit.none : BoxFit.cover,
+                      fit: _personImageURL == null ? BoxFit.none : BoxFit.fill,
                     ),
                   ),
                 ),
               ),
               Positioned(
                 top: MediaQuery.of(context).size.height / 2.2,
-                child: Container(
+                child:
+                Container(
                   child:
-                  /* LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            return Column(mainAxisAlignment: MainAxisAlignment.end, children: [*/
-                  //  Container(
-                  //  margin: EdgeInsets.fromLTRB(40, 0, 0, 50),
-                  //    child:
                   Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    //alignment: Alignment.bottomCenter,
                     children: [
                       SizedBox(height: 40),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                                margin: EdgeInsets.fromLTRB(30, 0, 0, 0),
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(_personName,
-                                          style: TextStyle(
-                                            color: Color(0xff47659e),
-                                            fontSize: 28,
-                                            fontFamily: "Roboto",
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 1.96,
-                                            // ),
-                                          )),
-                                      /* Container(
-                            // alignment: Alignment.center,
-                            margin: EdgeInsets.fromLTRB(0, 0, , 0),
-                            child: IconButton(
-                                icon: const Icon(
-                                    FluentIcons.settings_24_regular,
-                                    color: Color(0xff48659e)),
-                                iconSize: 40,
-                                onPressed: _onOpenSettingsButtonPressed),
-                          )*/ ///////////// убрать в отдельную колонку видимо хз
-                                      /* Positioned(
-                      left: 60,
-                      top: 75,*/
-                                      //child:
-                                      Row(children: [
-                                        Container(
-                                          // alignment: Alignment.center,
-                                          margin: EdgeInsets.fromLTRB(0, 0, 0, 2.5),
-                                          child: Icon(Ionicons.ios_paw,
-                                              color: Color(_isWalking
-                                                  ? 0xff4f9567
-                                                  : 0xffb60040),
-                                              size: 16),
-                                        ),
-                                        SizedBox(
-                                          width: 3,
-                                        ),
-                                        Text(
-                                          _isWalking ? "на прогулке" : "сидит дома",
-                                          style: TextStyle(
-                                            color: Color(_isWalking
-                                                ? 0xff4f9567
-                                                : 0xffb60040),
-                                            fontSize: 12,
-                                            fontFamily: "Roboto",
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 0.84,
-                                          ),
-                                          //   ),
-                                        ),
-                                      ]),
-                                    ])),
-                            Container(
-                              // alignment: Alignment.center,
-                              margin: EdgeInsets.fromLTRB(0, 0, 5, 0),
-                              child: IconButton(
-                                  icon: const Icon(FluentIcons.settings_24_regular,
-                                      color: Color(0xff48659e)),
-                                  iconSize: 40,
-                                  onPressed: _onOpenSettingsButtonPressed),
-                            )
-                          ]),
-                      /*Positioned(
-                      left: 42,
-                      top: 130,*/
-                      //child:
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Container(
+                            margin: EdgeInsets.fromLTRB(30, 0, 0, 0),
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      _personName, //!!!!!!!!!!!!!!!! тут должно быть имя из БД
+                                      style: TextStyle(
+                                        color: Color(0xff47659e),
+                                        fontSize: 28,
+                                        fontFamily: "Roboto",
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.96,
+                                        // ),
+                                      )),
+                                  Row(children: [
+                                    Container(
+                                      // alignment: Alignment.center,
+                                      margin: EdgeInsets.fromLTRB(0, 0, 0, 2.5),
+                                      child: Icon(Ionicons.ios_paw,
+                                          color: Color(0xff4f9567), size: 16),
+                                    ),
+                                    SizedBox(
+                                      width: 3,
+                                    ),
+                                    Text(
+                                      "на прогулке", //!!!!!!!!!!!!!!!! тут должен быть статус из БД
+                                      style: TextStyle(
+                                        color: Color(0xff3b7c51),
+                                        fontSize: 12,
+                                        fontFamily: "Roboto",
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.84,
+                                      ),
+                                      //   ),
+                                    ),
+                                  ]),
+                                ])),
+                        Container(
+                          margin: EdgeInsets.fromLTRB(0, 0, 25, 0),
+                          width: 68,
+                          height: 43,
+                          child:
+                          ElevatedButton(
+                              onPressed: _onUserChatButtonPressed,
+                              style: ButtonStyle(
+                                  backgroundColor:
+                                  MaterialStateProperty.all(
+                                      Color(0xffee870d)),
+                                  foregroundColor:
+                                  MaterialStateProperty.all(
+                                    Color(0xffee870d),
+                                  ),
+                                  overlayColor: MaterialStateProperty.all(
+                                      Color(0xffee870d)),
+                                  shadowColor: MaterialStateProperty.all(
+                                      Color(0xffee870d)),
+                                  //elevation: MaterialStateProperty.all(20),
+                                  side: MaterialStateProperty.all(
+                                      BorderSide(
+                                          width: 155,
+                                          style: BorderStyle.none,
+                                          color: Color(0xffee870d))),
+                                  enableFeedback: false,
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(22),
+                                          side: BorderSide(
+                                              color: Color(0xffee870d))))
+                              ),
+                              child:
+                              Text(
+                                "Чат",
+                                style: TextStyle(
+                                  color: Color(0xfffbfbfb),
+                                  fontSize: 18,
+                                  fontFamily: "Roboto",
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              )),
+                        )
+                      ]),
                       SizedBox(
                         height: 30,
                       ),
@@ -330,12 +330,26 @@ class _PersonProfileState extends State<PersonProfile> {
                       ),
                       Container(
                         margin: EdgeInsets.fromLTRB(30, 0, 0, 0),
-                        height: 120,
+                        height: 130,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: _dogs.toList(),
                         ),
                       ),
+                      // ),*/
+                      //дальше иконки
+                      /* Positioned(
+                      left: 40,
+                      top: 72,
+                      child: */
+                      //!!!!!!!! color должен меняться в зависимости от БД
+                      // ),
+                      /* Positioned(
+                      right: 22,
+                      top: 35,
+                      child: */
+
+                      // ),
                     ],
                   ),
                   height: MediaQuery.of(context).size.height *
@@ -437,7 +451,7 @@ class _PersonProfileState extends State<PersonProfile> {
                           onPressed: _onMapButtonPressed),
                       IconButton(
                           padding: EdgeInsets.zero,
-                          icon: Icon(Boxicons.bx_home, color: Color(0xff7e5729)),
+                          icon: Icon(Boxicons.bx_home, color: Color(0xe852a8f7)),
                           iconSize: 50),
                     ],
                   ),
