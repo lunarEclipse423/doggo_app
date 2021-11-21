@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_maps/helper/helper_functions.dart';
+import 'const.dart';
 
 
 class InputCodeWindow extends StatefulWidget {
@@ -68,7 +69,7 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
       });
       if(mounted) {
         Navigator.pushNamedAndRemoveUntil(
-            context, '/map/${FirebaseAuth.instance.currentUser.uid}', (
+            context, '/tabsPage', (
             route) => false);
       }
       //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);

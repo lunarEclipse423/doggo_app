@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,6 +10,8 @@ import 'package:flutter/src/painting/box_decoration.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+
+import 'const.dart';
 
 class PersonProfileView extends StatefulWidget {
   final String _currentUid;
@@ -84,6 +87,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
       String dogBreed = element.get('breed');
       String dogSex = element.get('sex');
       String dogAge = element.get('age').toString();
+      bool dogIsWalking = element.get('isWalking');
 
       dogs.add(
         Row(
@@ -93,7 +97,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
               width: 130,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(dogImageURL),
+                  image: CachedNetworkImageProvider(dogImageURL),
                   fit: BoxFit.cover,
                 ),
                 borderRadius: BorderRadius.circular(21),
@@ -127,7 +131,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
                             child: Icon(
                                 Ionicons.ios_paw,
                                 color: Color(
-                                    _isWalking ? 0xff4f9567 : 0xffb60040
+                                    dogIsWalking ? 0xff4f9567 : 0xffb60040
                                 ),
                                 size: 20
                             ),
@@ -192,6 +196,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
             fit: StackFit.loose,
             alignment: AlignmentDirectional.topCenter,
             children: <Widget>[
+              SizedBox(height: MediaQuery.of(context).size.height,),
               Positioned(
                 // bottom: 10,
                 child:
@@ -203,8 +208,8 @@ class _PersonProfileViewState extends State<PersonProfileView> {
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: _personImageURL == null
-                          ? AssetImage('assets/loading.gif')
-                          : NetworkImage(_personImageURL),
+                          ? AssetImage(randomGif)
+                          : CachedNetworkImageProvider(_personImageURL),
                       // придумать, что делать, пока фото грузится
                       // (может как-то использовать анимацию загрузки)
                       fit: _personImageURL == null ? BoxFit.none : BoxFit.fill,
@@ -244,15 +249,19 @@ class _PersonProfileViewState extends State<PersonProfileView> {
                                       // alignment: Alignment.center,
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 2.5),
                                       child: Icon(Ionicons.ios_paw,
-                                          color: Color(0xff4f9567), size: 16),
+                                          color: Color(_isWalking
+                                              ? 0xff4f9567
+                                              : 0xffb60040), size: 16),
                                     ),
                                     SizedBox(
                                       width: 3,
                                     ),
                                     Text(
-                                      "на прогулке", //!!!!!!!!!!!!!!!! тут должен быть статус из БД
+                                       _isWalking ? "на прогулке" : "сидит дома", //!!!!!!!!!!!!!!!! тут должен быть статус из БД
                                       style: TextStyle(
-                                        color: Color(0xff3b7c51),
+                                          color: Color(_isWalking
+                                              ? 0xff4f9567
+                                              : 0xffb60040),
                                         fontSize: 12,
                                         fontFamily: "Roboto",
                                         fontWeight: FontWeight.w900,
@@ -402,61 +411,6 @@ class _PersonProfileViewState extends State<PersonProfileView> {
                   ),
                 ),
               ),*/
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: 303.81,
-                  height: 68,
-                  margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 35.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x3f53a8f8),
-                        blurRadius: 3,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                    color: Color(0xe5ffffff),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(PhosphorIcons.chats_circle,
-                              color: Color(0xe852a8f7)),
-                          iconSize: 52,
-                          //padding: ,
-                          onPressed: _onChatButtonPressed),
-                      /*Container(
-                              padding: const EdgeInsets.all(0.0),
-                              width: 35.10,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(Boxicons.bx_search,
-                                      color: Color(0xe852a8f7)),
-                                  iconSize: 50,
-                                  //padding: ,
-                                  onPressed: _onWalkButtonPressed)),*/
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Boxicons.bx_world, color: Color(0xe852a8f7)),
-                          iconSize: 50,
-                          onPressed: _onMapButtonPressed),
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Boxicons.bx_home, color: Color(0xe852a8f7)),
-                          iconSize: 50),
-                    ],
-                  ),
-                ),
-              ),
             ]));
     // })),
     //]));

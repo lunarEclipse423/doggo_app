@@ -9,11 +9,13 @@ import 'package:flutter/src/painting/box_decoration.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'const.dart';
 
 class PersonProfile extends StatefulWidget {
   final String _currentUid;
 
-  PersonProfile({String uid}) : _currentUid = uid;
+  PersonProfile(String uid) : _currentUid = uid;
 
   @override
   _PersonProfileState createState() => _PersonProfileState();
@@ -23,24 +25,28 @@ class _PersonProfileState extends State<PersonProfile> {
   String _personImageURL;
   String _personName = ' ';
 
-  bool _isWalking = false;
-
   List<Widget> _dogs = [];
 
   void initState() {
     super.initState();
+    _fillFields().then((value) => null);
 
-    _fillFields();
   }
 
-  void _fillFields() async {
+  updateDogs() async
+  {
+
+    _dogs = _fillListDogs(myDogs);
+  }
+
+  Future _fillFields() async {
+    print("INIT STATE!!!!");
     DocumentSnapshot user = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget._currentUid)
         .get();
 
     String personName = user.get('name');
-    bool isWalking = user.get('isWalking');
 
     String personImageURL = '';
 
@@ -52,22 +58,36 @@ class _PersonProfileState extends State<PersonProfile> {
         .getDownloadURL()
         .then((fileURL) => setState(() => personImageURL = fileURL));
 
-    QuerySnapshot dogsCollection = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget._currentUid)
-        .collection('dogs')
-        .get();
+    bool isException = true;
+    QuerySnapshot dogsCollection;
+    while(isException) {
+      try {
+        dogsCollection = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget._currentUid)
+            .collection('dogs')
+            .get();
+        isException = false;
+      }
+      on Exception catch (e) {
+        print("wtf");
+      }
+    }
+
 
     List<DocumentSnapshot> dogsList = dogsCollection.docs;
+    myDogs = dogsCollection.docs;
+    List<Widget> dogs = [];
 
-    List<Widget> dogs = _fillListDogs(dogsList);
-
-    setState(() {
-      _personImageURL = personImageURL;
-      _personName = personName;
-      _isWalking = isWalking;
-      _dogs = dogs;
-    });
+    if(mounted) {
+      setState(() {
+        print("SET STATE!!!!");
+        dogs = _fillListDogs(dogsList);
+        _personImageURL = personImageURL;
+        _personName = personName;
+        _dogs = dogs;
+      });
+    }
   }
 
   List<Widget> _fillListDogs(List<DocumentSnapshot> dogsList) {
@@ -80,93 +100,109 @@ class _PersonProfileState extends State<PersonProfile> {
       Reference storageReference = FirebaseStorage.instance.ref().child(
           'users/' + widget._currentUid + '/dogs/' + element.id + '/profile');
 
-      await storageReference
-          .getDownloadURL()
-          .then((fileURL) => setState(() => dogImageURL = fileURL));
+      bool isException = true;
+      while(isException) {
+        try {
+          await storageReference
+              .getDownloadURL()
+              .then((fileURL) => setState(() => dogImageURL = fileURL));
 
-      String dogBreed = element.get('breed');
-      String dogSex = element.get('sex');
-      String dogAge = element.get('age').toString();
+          isException = false;
+        }
+        on Exception catch (e) {
+          print("wtf");
+        }
+      }
 
-      dogs.add(
-        Row(
-          children: [
-            Container(
-              height: 130,
-              width: 130,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(dogImageURL),
-                  fit: BoxFit.cover,
+        String dogBreed = element.get('breed');
+        String dogSex = element.get('sex');
+        String dogAge = element.get('age').toString();
+        bool _dogIsWalking = element.get('isWalking');
+
+        dogs.add(
+          Row(
+            children: [
+              Container(
+                height: 130,
+                width: 130,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: CachedNetworkImageProvider(dogImageURL),
+                    fit: BoxFit.cover,
+                  ),
+                  borderRadius: BorderRadius.circular(21),
                 ),
-                borderRadius: BorderRadius.circular(21),
               ),
-            ),
-            SizedBox(width: 20),
-            Container(
-              width: 180,
-              height: 69,
-              child: Stack(
-                children: [
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Row(children: [
+              SizedBox(width: 20),
+              Container(
+                width: 180,
+                height: 69,
+                child: Stack(
+                  children: [
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Row(
+                              children: [
+                                Text(
+                                  dogName,
+                                  style: TextStyle(
+                                    color: Color(0xff48659e),
+                                    fontSize: 18,
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.12,
+                                  ),
+                                ),
+                                SizedBox(width: 3),
+                                Container(
+                                  // alignment: Alignment.center,
+                                  margin: EdgeInsets.fromLTRB(0, 1, 0, 0),
+                                  child: Icon(Ionicons.ios_paw,
+                                      color: Color(_dogIsWalking ? 0xff4f9567 : 0xffb60040),
+                                      size: 20
+                                  ),
+                                )
+                              ]
+                          ),
+                          SizedBox(height: 6),
+                          Flexible(
+                              child: Text(
+                                dogBreed,
+                                style: TextStyle(
+                                  color: Color(0xff48659e),
+                                  fontSize: 15,
+                                  fontFamily: "Roboto",
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.98,
+                                ),
+                              )
+                          ),
                           Text(
-                            dogName,
+                            (dogSex == "Male" ? "мальчик, " : "девочка, ") +
+                                dogAge +
+                                " лет",
                             style: TextStyle(
                               color: Color(0xff48659e),
-                              fontSize: 18,
+                              fontSize: 15,
                               fontFamily: "Roboto",
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.98,
                             ),
-                          ),
-                          SizedBox(width: 3),
-                          Container(
-                            // alignment: Alignment.center,
-                            margin: EdgeInsets.fromLTRB(0, 1, 0, 0),
-                            child: Icon(Ionicons.ios_paw,
-                                color:
-                                Color(_isWalking ? 0xff4f9567 : 0xffb60040),
-                                size: 20),
                           )
-                        ]),
-                        SizedBox(height: 6),
-                        Flexible(
-                            child: Text(
-                              dogBreed,
-                              style: TextStyle(
-                                color: Color(0xff48659e),
-                                fontSize: 15,
-                                fontFamily: "Roboto",
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.98,
-                              ),
-                            )
-                        ),
-                        Text(
-                          (dogSex == "Male" ? "мальчик, " : "девочка, ") +
-                              dogAge +
-                              " лет",
-                          style: TextStyle(
-                            color: Color(0xff48659e),
-                            fontSize: 15,
-                            fontFamily: "Roboto",
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.98,
-                          ),
-                        )
-                      ]),
-                ],
+                        ]
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
     });
+    setState(() {
 
+    });
     return dogs;
   }
 
@@ -198,22 +234,23 @@ class _PersonProfileState extends State<PersonProfile> {
             fit: StackFit.loose,
             alignment: AlignmentDirectional.topCenter,
             children: <Widget>[
+              SizedBox(height: MediaQuery.of(context).size.height,),
               Positioned(
                 // bottom: 10,
                 child: Container(
-                  //alignment: Alignment.topCenter,
+                  alignment: Alignment.topCenter,
                   height: _personImageURL == null
                       ? MediaQuery.of(context).size.height * 0.45
-                      : MediaQuery.of(context).size.height *
-                      0.65, // как раз таки относительное взятие размеров окна
+                      : MediaQuery.of(context).size.height * 0.65, // как раз таки относительное взятие размеров окна
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: _personImageURL == null
-                          ? AssetImage('assets/sleep_dog.gif')
-                          : NetworkImage(
+                          ? AssetImage(randomGif)
+                          : CachedNetworkImageProvider(
                           _personImageURL), // придумать, что делать, пока фото грузится
                       // (может как-то использовать анимацию загрузки)
                       fit: _personImageURL == null ? BoxFit.none : BoxFit.cover,
+                      alignment: Alignment.topCenter,
                     ),
                   ),
                 ),
@@ -271,7 +308,7 @@ class _PersonProfileState extends State<PersonProfile> {
                                           // alignment: Alignment.center,
                                           margin: EdgeInsets.fromLTRB(0, 0, 0, 2.5),
                                           child: Icon(Ionicons.ios_paw,
-                                              color: Color(_isWalking
+                                              color: Color(userWalking
                                                   ? 0xff4f9567
                                                   : 0xffb60040),
                                               size: 16),
@@ -280,9 +317,9 @@ class _PersonProfileState extends State<PersonProfile> {
                                           width: 3,
                                         ),
                                         Text(
-                                          _isWalking ? "на прогулке" : "сидит дома",
+                                          userWalking ? "на прогулке" : "сидит дома",
                                           style: TextStyle(
-                                            color: Color(_isWalking
+                                            color: Color(userWalking
                                                 ? 0xff4f9567
                                                 : 0xffb60040),
                                             fontSize: 12,
@@ -349,97 +386,6 @@ class _PersonProfileState extends State<PersonProfile> {
                       bottomRight: Radius.circular(0),
                     ),
                     color: Color(0xfffbfbfb),
-                  ),
-                ),
-              ),
-              /* Container(
-                margin: EdgeInsets.fromLTRB(0, 0, 0, 40),
-                width: MediaQuery.of(context).size.width / 1.15,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _onAddDogButtonPressed,
-                  style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Color(0xffee870d)),
-                      foregroundColor: MaterialStateProperty.all(
-                        Color(0xffee870d),
-                      ),
-                      overlayColor:
-                          MaterialStateProperty.all(Color(0xffee870d)),
-                      shadowColor: MaterialStateProperty.all(Color(0xffee870d)),
-                      //elevation: MaterialStateProperty.all(20),
-                      side: MaterialStateProperty.all(BorderSide(
-                          style: BorderStyle.none, color: Color(0xffee870d))),
-                      enableFeedback: false,
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                              side: BorderSide(color: Color(0xffee870d))))
-                      //shape: MaterialStateProperty.all(O)
-                      ),
-                  child: Text(
-                    "Добавить собаку",
-                    style: TextStyle(
-                      color: Color(0xfffbfbfb),
-                      fontSize: 20,
-                      fontFamily: "Roboto",
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),*/
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: 303.81,
-                  height: 68,
-                  margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 35.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x3f53a8f8),
-                        blurRadius: 3,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                    color: Color(0xe5ffffff),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(PhosphorIcons.chats_circle,
-                              color: Color(0xe852a8f7)),
-                          iconSize: 52,
-                          //padding: ,
-                          onPressed: _onChatButtonPressed),
-                      /*Container(
-                              padding: const EdgeInsets.all(0.0),
-                              width: 35.10,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(Boxicons.bx_search,
-                                      color: Color(0xe852a8f7)),
-                                  iconSize: 50,
-                                  //padding: ,
-                                  onPressed: _onWalkButtonPressed)),*/
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Boxicons.bx_world, color: Color(0xe852a8f7)),
-                          iconSize: 50,
-                          onPressed: _onMapButtonPressed),
-                      IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Boxicons.bx_home, color: Color(0xff7e5729)),
-                          iconSize: 50),
-                    ],
                   ),
                 ),
               ),

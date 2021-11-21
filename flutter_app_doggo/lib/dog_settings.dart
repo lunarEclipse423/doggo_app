@@ -12,6 +12,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:image_crop/image_crop.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'const.dart';
 
 class DogSettings extends StatefulWidget {
   final String _currentUid;
@@ -85,7 +87,7 @@ class _DogSettingsState extends State<DogSettings> {
     _name = dog.get('name');
     _sex = dog.get('sex') == 'Female' ? 'Девочка' : 'Мальчик';
 
-    if(_sex == 'Female') {
+    if(dog.get('sex') == 'Female') {
       _pressedButtonFemale = true;
       _pressedButtonMale = false;
     }
@@ -174,13 +176,13 @@ class _DogSettingsState extends State<DogSettings> {
             {'name': _name, 'sex': _sex, 'age': _age, 'breed': _breed, 'description' : _description}
       );
 
-      Navigator.pushNamedAndRemoveUntil(context, '/map/${widget._currentUid}', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
     });
   }
 
   void _onNotAddDogButtonPressed() {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/map/${widget._currentUid}', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
     });
   }
 
@@ -310,9 +312,9 @@ class _DogSettingsState extends State<DogSettings> {
                                           decoration: BoxDecoration(
                                             image: DecorationImage(
                                               image: (_dogImageURL == null && dogImage == null
-                                                  ? AssetImage('assets/sleep_dog.gif')
+                                                  ? AssetImage(randomGif)
                                                   : (dogImage == null
-                                                    ? NetworkImage(_dogImageURL)
+                                                    ? CachedNetworkImageProvider(_dogImageURL)
                                                     : FileImage(dogImage))
                                               ),
                                               fit: BoxFit.cover,
