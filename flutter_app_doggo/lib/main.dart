@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps/add_dog.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
@@ -30,89 +32,126 @@ import 'tabs_page.dart';
 import 'const.dart';
 
 void main() => runApp(App());
-String start = "";
+//String start = '';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
+  _AppState createState() => _AppState();
+}
+
+class _AppState extends State<App>
+{
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+
   @override
   Widget build(BuildContext context) {
-    Firebase.initializeApp();
-    WidgetsFlutterBinding.ensureInitialized();
-    return FutureBuilder(builder: (context, snapshot) {
-      return MyApp();
-    });
-  }
+    return FutureBuilder(
+        future: _initialization,
+        //initialData: Settings(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.none ||
+              snapshot.connectionState == ConnectionState.waiting ||
+              snapshot.hasError || snapshot.data == null)
+          {
+            return Container(color: Colors.white);
+          }
+              return FutureBuilder(builder: (context, snapshot) {
+                return MyApp();
+              });
+
+        }
+    );
+   }
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Geolocation',
-      initialRoute: '/',
-    // home: TabsPage(),
-      routes: {
-        '/': (BuildContext context) => WelcomeWindow(),
-        '/map': (BuildContext context) => Map('uid'),
-        '/dogProfile': (BuildContext context) => DogProfile('user', 'dog'),
-        '/inputPhoneNumber': (BuildContext context) => InputPhoneNumberWindow(),
-        //  '/inputCode':(BuildContext context) => InputCodeWindow(phoneNumber),
-        '/register': (BuildContext context) => RegisterWindow(),
-        '/addDog': (BuildContext context) => AddDogWindow(),
-        '/personProfile': (BuildContext context) => PersonProfile('uid'),
-        '/personProfileView': (BuildContext context) => PersonProfileView(),
-        '/humanSettings': (BuildContext context) => HumanSettings('user'),
-        '/dogSettings': (BuildContext context) => DogSettings('user', 'dog'),
-        '/tabsPage' : (BuildContext context) => tabsPage,
-        //тут в общем заводим пути для наших окошек всех
-      },
-      onGenerateRoute: (routeSettings) {
-        var path = routeSettings.name.split('/');
+    bool auth = false;
+    if(FirebaseAuth.instance.currentUser?.uid == null){
+      print('\nUser is currently signed out!\n');
+           auth = false;
+    } else {
+      print('\nUser is signed in!\n');
+           auth = true;
+    }
+    print("DONE");
+    return FutureBuilder(builder: (context, snapshot) {
+      return MaterialApp(
+        title: 'Flutter Geolocation',
+        //initialRoute: start,
+        home: auth ? TabsPage(index : 1) : WelcomeWindow(),
+        routes: {
+          '/hello': (BuildContext context) => WelcomeWindow(),
+          '/map': (BuildContext context) =>
+              Map(FirebaseAuth.instance.currentUser.uid),
+          '/chat': (BuildContext context) => ChatRoom(),
+          '/dogProfile': (BuildContext context) => DogProfile('user', 'dog'),
+          '/inputPhoneNumber': (BuildContext context) =>
+              InputPhoneNumberWindow(),
+          //  '/inputCode':(BuildContext context) => InputCodeWindow(phoneNumber),
+          '/register': (BuildContext context) => RegisterWindow(),
+          '/addDog': (BuildContext context) => AddDogWindow(),
+          '/personProfile': (BuildContext context) => PersonProfile('uid'),
+          '/personProfileView': (BuildContext context) => PersonProfileView(),
+          '/humanSettings': (BuildContext context) => HumanSettings('user'),
+          '/dogSettings': (BuildContext context) => DogSettings('user', 'dog'),
+          '/tabsPage': (BuildContext context) => TabsPage(),
+          //тут в общем заводим пути для наших окошек всех
+        },
+        onGenerateRoute: (routeSettings) {
+          var path = routeSettings.name.split('/');
 
-        if (path[1] == "map") {
-          return new MaterialPageRoute(
-            builder: (context) => new Map(path[2]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "addDog") {
-          return new MaterialPageRoute(
-            builder: (context) => new AddDogWindow(uid: path[2]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "dogProfile") {
-          return new MaterialPageRoute(
-            builder: (context) => new DogProfile(path[2], path[3]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "personProfile") {
-          return new MaterialPageRoute(
-            builder: (context) => new PersonProfile(path[2]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "personProfileView") {
-          return new MaterialPageRoute(
-            builder: (context) => new PersonProfileView(uid: path[2]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "humanSettings") {
-          return new MaterialPageRoute(
-            builder: (context) => new HumanSettings(path[2]),
-            settings: routeSettings,
-          );
-        }
-        if (path[1] == "dogSettings") {
-          return new MaterialPageRoute(
-            builder: (context) => new DogSettings(path[2], path[3]),
-            settings: routeSettings,
-          );
-        }
-      },
-    );
-  }
+          if (path[1] == "map") {
+            return new MaterialPageRoute(
+              builder: (context) => new Map(path[2]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "addDog") {
+            return new MaterialPageRoute(
+              builder: (context) => new AddDogWindow(uid: path[2]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "dogProfile") {
+            return new MaterialPageRoute(
+              builder: (context) => new DogProfile(path[2], path[3]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "personProfile") {
+            return new MaterialPageRoute(
+              builder: (context) => new PersonProfile(path[2]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "personProfileView") {
+            return new MaterialPageRoute(
+              builder: (context) => new PersonProfileView(uid: path[2]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "humanSettings") {
+            return new MaterialPageRoute(
+              builder: (context) => new HumanSettings(path[2]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "dogSettings") {
+            return new MaterialPageRoute(
+              builder: (context) => new DogSettings(path[2], path[3]),
+              settings: routeSettings,
+            );
+          }
+          if (path[1] == "tabsPage") {
+            return new MaterialPageRoute(
+              builder: (context) => new TabsPage(index: int.parse(path[2])),
+              settings: routeSettings,
+            );
+          }
+        },
+      );
+    });}
 }
 
 class Map extends StatefulWidget {
@@ -135,15 +174,13 @@ class _MapState extends State<Map> {
   BitmapDescriptor _redLocationIcon;
   //Location _location;
   final List<BitmapDescriptor> _iconNumbers = [];
-  DocumentReference _writeUser;
   static List<DocumentSnapshot> _myDogs = [];
   List<MultiSelectItem<DocumentSnapshot>> _items = [];
   int _selectedIndex = 0;
+  OverlayEntry _overlayEntry;
 
   @override
   void initState() {
-    _writeUser =
-        FirebaseFirestore.instance.collection('users').doc(widget._currentUid);
     _setCustomMapPin();
 
     super.initState();
@@ -168,7 +205,7 @@ class _MapState extends State<Map> {
   }
 
   _getDogsData() async {
-    final QuerySnapshot result = await _writeUser.collection('dogs').get();
+    final QuerySnapshot result = await writeUser.collection('dogs').get();
     if (mounted) {
       myDogs = result.docs;
       setState(() {
@@ -183,26 +220,198 @@ class _MapState extends State<Map> {
   _setUserData() async {
     _currentLocation = await _location.getLocation();
     if (mounted) {
-      _writeUser.update({
+      writeUser.update({
         'location':
             GeoPoint(_currentLocation.latitude, _currentLocation.longitude),
       });
 
-      setState(() {});
     }
   }
 
-  void _addMarker(DocumentSnapshot user, String dog) {
+  Future _getDogs(List<Widget> dogs, DocumentSnapshot user) async {
+    List<DocumentSnapshot> dogsList = (await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.id)
+        .collection('dogs')
+        .get())
+        .docs;
+
+    dogsList.forEach((element) async {
+      if(element.get('isWalking') == true) {
+        String dogName = element.get('name');
+
+        String dogImageURL = '';
+        Reference storageReference = FirebaseStorage.instance.ref().child(
+            'users/' + user.id + '/dogs/' + element.id + '/profile');
+
+        await storageReference
+            .getDownloadURL()
+            .then((fileURL) => setState(() => dogImageURL = fileURL));
+
+        dogs.add(
+            GestureDetector(
+              onTap: (){
+                _overlayEntry.remove();
+                Navigator.of(context).push(SwipeablePageRoute(
+                    builder: (BuildContext context) =>
+                        DogProfile(user.id, element.id)));
+              },
+            child: Container(
+              margin: EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SizedBox(
+                height: 50,
+
+                  // style: ButtonStyle(
+                  //   backgroundColor: MaterialStateProperty.all(
+                  //       Colors.white.withOpacity(0)
+                  //   ),
+                  //   foregroundColor: MaterialStateProperty.all(
+                  //       Colors.white.withOpacity(0)
+                  //   ),
+                  //   overlayColor: MaterialStateProperty.all(
+                  //       Colors.white.withOpacity(0)
+                  //   ),
+                  //   shadowColor: MaterialStateProperty.all(
+                  //       Colors.white.withOpacity(0)
+                  //   ),
+                  // ),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: CachedNetworkImageProvider(dogImageURL),
+                            fit: BoxFit.cover,
+                          ),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                      ),
+                      SizedBox(width: 60),
+                      Container(
+                        width: 70,
+                        height: 80,
+                        child: Stack(
+                          children: [
+                            Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  SizedBox(height: 4),
+                                  Row(children: [
+                                    Text(
+                                      dogName,
+                                      style: TextStyle(
+                                        color: Color(0xff48659e),
+                                        fontSize: 13,
+                                        fontFamily: "Roboto",
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.12,
+                                      ),
+                                    ),
+                                  ]),
+                                ]),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  // onPressed: () {
+                  //   _overlayEntry.remove();
+                  //   Navigator.of(context).push(SwipeablePageRoute(
+                  //       builder: (BuildContext context) =>
+                  //           DogProfile(user.id, element.id)));
+                  // },
+                ),
+              ),
+            )
+        );
+      }
+    });
+
+//loading = false;
+  }
+
+
+  _showOverlay(BuildContext context, DocumentSnapshot user) async {
+    List<Widget> dogs = [];
+       // bool loading = true;
+    int walkingDogs = user.get('walkingDogs');
+   // bool start = false;
+    bool finish = false;
+    while (dogs.length < walkingDogs && finish == false) {
+      print('LOADING........');
+        await _getDogs(dogs, user).then((value) => (){ finish = true;});
+     // loading = false;
+    }
+
+    _overlayEntry =  OverlayEntry(
+      builder: (context) =>
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor:
+              MaterialStateProperty.all(Colors.white.withOpacity(0)),
+              enableFeedback: false
+                ),
+              onPressed: (){ _overlayEntry?.remove();},
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 90.0),
+                    height: MediaQuery.of(context).size.height * 0.13,
+                    width: MediaQuery.of(context).size.width * 0.53,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.fromLTRB(0.0, 10, 0.0, 50),
+                            scrollDirection: Axis.horizontal,
+                            children: dogs.toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+      )
+          )
+    );
+    setState(() {
+      if(dogs.length > walkingDogs)
+      {
+        while(dogs.length != walkingDogs)
+        {
+          dogs.removeLast();
+        }
+      }
+      Overlay.of(context).insert(_overlayEntry);
+    });
+
+  }
+
+
+  void _addMarker(DocumentSnapshot user, String dog)  async {
+
     _markers.add(Marker(
         markerId: MarkerId(user.id),
         icon:
             user.get('status') == true ? _greenLocationIcon : _redLocationIcon,
         position: LatLng(
             user.get('location').latitude, user.get('location').longitude),
-        onTap: () {
-          Navigator.of(context).push(SwipeablePageRoute(
-            builder: (BuildContext context) => DogProfile(user.id, dog),
-          ));
+        onTap: () async {
+          // Navigator.of(context).push(SwipeablePageRoute(
+          //   builder: (BuildContext context) => DogProfile(user.id, dog),
+          // ));
+          await _showOverlay(context,  user);
         }));
     _markers.add(Marker(
       markerId: MarkerId(user.id + "/number"),
@@ -215,7 +424,7 @@ class _MapState extends State<Map> {
   }
 
   void _updateLocationOnDataBase() async {
-    _writeUser.update({
+    writeUser.update({
       'location':
           GeoPoint(_currentLocation.latitude, _currentLocation.longitude)
     });
@@ -259,12 +468,12 @@ class _MapState extends State<Map> {
   }
 
   void _onWalkButtonPressed() async {
-    final CollectionReference writeDogs = _writeUser.collection('dogs');
+    final CollectionReference writeDogs = writeUser.collection('dogs');
 
     if (mounted) {
       setState(() {
         if (userWalking == true && _walkingDogs.length > 0) {
-          _writeUser
+          writeUser
               .update({'isWalking': (false)})
               .then((value) => print("Walk status changed"))
               .catchError(
@@ -278,24 +487,24 @@ class _MapState extends State<Map> {
           });
 
           _walkingDogs.clear();
-          _writeUser.update({'walkingDogs': 0});
+          writeUser.update({'walkingDogs': 0});
         } else {
           print("КОЛ СОБАК " + myDogs.length.toString());
           if (myDogs.length > 1) {
             _showMultiSelect(context);
           } else if (myDogs.length == 1) {
             _walkingDogs.add(myDogs[0]);
-            _writeUser
+            writeUser
                 .update({'isWalking': (true)})
                 .then((value) => print("Walk status changed"))
                 .catchError(
                     (error) => print("Failed to change walk status: $error"));
             userWalking = true;
-            _writeUser
+            writeUser
                 .collection('dogs')
                 .doc(_walkingDogs[0].id)
                 .update({'isWalking': true});
-            _writeUser.update({'walkingDogs': 1});
+            writeUser.update({'walkingDogs': 1});
             _showScaffold("Вы пошли гулять с ${_walkingDogs[0].get('name')}!");
             _updatePinOnMap();
           } else {
@@ -388,26 +597,26 @@ class _MapState extends State<Map> {
           items: _items,
           //initialValue: _items,
           onConfirm: (values) {
-            setState(() {
               _walkingDogs = values;
               if (_walkingDogs.isEmpty) {
                 _showScaffold("Собака не выбрана :(");
               } else {
-                _writeUser
+                writeUser
                     .update({'isWalking': (true)})
                     .then((value) => print("Walk status changed"))
                     .catchError((error) =>
                         print("Failed to change walk status: $error"));
                 userWalking = true;
                 _walkingDogs.forEach((element) {
-                  _writeUser
+                  writeUser
                       .collection('dogs')
                       .doc(element.id)
                       .update({'isWalking': true});
                 });
-                _writeUser.update({'walkingDogs': _walkingDogs.length});
+                writeUser.update({'walkingDogs': _walkingDogs.length});
                 _updatePinOnMap();
               }
+              setState(() {
             });
           },
         );
@@ -424,11 +633,11 @@ class _MapState extends State<Map> {
   void _onChangeStatusButtonPressed() {
     if (_status == true) {
       _dogStatus = BadDogIcon;
-      _writeUser.update({'status': false});
+      writeUser.update({'status': false});
       _status = false;
     } else {
       _dogStatus = GoodDogIcon;
-      _writeUser.update({'status': true});
+      writeUser.update({'status': true});
       _status = true;
     }
     //дальше обновляем прорисовку марки
@@ -440,23 +649,24 @@ class _MapState extends State<Map> {
     //и прорисовываем:
     if (mounted) {
       if (userWalking == true) {
-        _markers.add(Marker(
-            markerId: MarkerId(widget._currentUid),
-            icon: _status == true ? _greenLocationIcon : _redLocationIcon,
-            position:
-                LatLng(_currentLocation.latitude, _currentLocation.longitude),
-            onTap: () {
-              Navigator.of(context).push(SwipeablePageRoute(
-                builder: (BuildContext context) =>
-                    DogProfile(widget._currentUid, _walkingDogs.first.id),
-              ));
-            }));
-        _markers.add(Marker(
-          markerId: MarkerId(widget._currentUid + "/number"),
-          icon: _iconNumbers[_walkingDogs.length - 1],
-          position:
-              LatLng(_currentLocation.latitude, _currentLocation.longitude),
-        ));
+        _updatePinOnMap();
+        // _markers.add(Marker(
+        //     markerId: MarkerId(widget._currentUid),
+        //     icon: _status == true ? _greenLocationIcon : _redLocationIcon,
+        //     position:
+        //         LatLng(_currentLocation.latitude, _currentLocation.longitude),
+        //     onTap: () {
+        //       Navigator.of(context).push(SwipeablePageRoute(
+        //         builder: (BuildContext context) =>
+        //             DogProfile(widget._currentUid, _walkingDogs.first.id),
+        //       ));
+        //     }));
+        // _markers.add(Marker(
+        //   markerId: MarkerId(widget._currentUid + "/number"),
+        //   icon: _iconNumbers[_walkingDogs.length - 1],
+        //   position:
+        //       LatLng(_currentLocation.latitude, _currentLocation.longitude),
+        // ));
       }
     }
     setState(() {});

@@ -128,6 +128,8 @@ class _AddDogWindowState extends State<AddDogWindow> {
     UploadTask uploadTask = storageReference.putFile(dogImage);
     print('File Uploaded');
 
+
+
     bool isException = true;
 
     do
@@ -158,13 +160,13 @@ class _AddDogWindowState extends State<AddDogWindow> {
             }
           );
 
-      Navigator.pushNamedAndRemoveUntil(context, '/map/${widget._currentUid}', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
     });
   }
 
   void _onNotAddDogButtonPressed() {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/map/${widget._currentUid}', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
     });
   }
 

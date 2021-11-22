@@ -90,6 +90,9 @@ class _PersonProfileViewState extends State<PersonProfileView> {
       bool dogIsWalking = element.get('isWalking');
 
       dogs.add(
+          GestureDetector(
+            onTap: () { Navigator.pushNamed(context, '/dogProfile/${widget._currentUid}/${element.id}');},
+            child:
         Row(
           children: [
             Container(
@@ -164,7 +167,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
             ),
           ],
         ),
-      );
+      ));
     });
 
     return dogs;

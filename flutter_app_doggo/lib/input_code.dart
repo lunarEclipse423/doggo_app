@@ -69,7 +69,7 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
       });
       if(mounted) {
         Navigator.pushNamedAndRemoveUntil(
-            context, '/tabsPage', (
+            context, '/tabsPage/1', (
             route) => false);
       }
       //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);

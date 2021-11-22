@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/gestures.dart';
 import 'package:google_maps/const.dart';
 import 'package:google_maps/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,24 +19,37 @@ class Chat extends StatefulWidget {
 class _ChatState extends State<Chat> {
   Stream<QuerySnapshot> chats;
   TextEditingController messageEditingController = new TextEditingController();
+  ScrollController _controller = new ScrollController();
+  double _messageSize;
 
   Widget chatMessagesList() {
-    return StreamBuilder(
+    return
+    Container(
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+        child:
+      StreamBuilder(
       stream: chats,
       builder: (context, snapshot) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Timer(
+            Duration(milliseconds: 1),
+                () => _controller.jumpTo(_controller.position.maxScrollExtent),
+          );
+        });
         return snapshot.hasData
             ? ListView.builder(
-                itemCount: snapshot.data.docs.length,
+            controller: _controller,
+            itemCount: snapshot.data.docs.length,
                 itemBuilder: (context, index) {
                   return MessageTile(
                     message: snapshot.data.docs[index].data()['message'],
                     sendByMe: Constants.myName ==
                         snapshot.data.docs[index].data()['sendBy'],
                   );
-                })
+            })
             : Container();
       },
-    );
+    ));
   }
 
   addMessage() {
@@ -54,6 +70,7 @@ class _ChatState extends State<Chat> {
 
   @override
   void initState() {
+    _controller = ScrollController();
     DatabaseMethods().getChats(widget.chatRoomId).then((val) {
       setState(() {
         chats = val;
@@ -64,6 +81,10 @@ class _ChatState extends State<Chat> {
 
   @override
   Widget build(BuildContext context) {
+   Timer(
+      Duration(milliseconds: 200),
+          () => _controller.jumpTo(_controller.position.maxScrollExtent),
+    );
     return Scaffold(
       // TODO: сделать высвечивание имени другого собеседника
       body: Container(
@@ -124,6 +145,7 @@ class _ChatState extends State<Chat> {
                     GestureDetector(
                       onTap: () {
                         addMessage();
+                       // _controller.jumpTo(_controller.position.maxScrollExtent);
                       },
                       child: Container(
                           height: 40,
@@ -157,7 +179,8 @@ class MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return
+      Container(
         padding:
             EdgeInsets.only(left: sendByMe ? 0 : 24, right: sendByMe ? 24 : 0),
         margin: EdgeInsets.symmetric(vertical: 8),

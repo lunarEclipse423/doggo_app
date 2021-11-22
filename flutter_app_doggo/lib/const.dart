@@ -18,7 +18,7 @@ var randomGif = gifList[random.nextInt(gifList.length)];
 
 bool userWalking = false;
 List<DocumentSnapshot> myDogs = [];
-TabsPage tabsPage = TabsPage();
+DocumentReference writeUser;
 //PersonProfile personProfile = PersonProfile(FirebaseAuth.instance.currentUser.uid);
 
 

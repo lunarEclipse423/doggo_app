@@ -176,13 +176,13 @@ class _DogSettingsState extends State<DogSettings> {
             {'name': _name, 'sex': _sex, 'age': _age, 'breed': _breed, 'description' : _description}
       );
 
-      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage/1', (route) => false);
     });
   }
 
   void _onNotAddDogButtonPressed() {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage/1', (route) => false);
     });
   }
 
