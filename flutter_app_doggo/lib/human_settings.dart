@@ -15,6 +15,12 @@ import 'input_code.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:google_maps/const.dart';
+<<<<<<< Updated upstream
+=======
+import 'package:shared_preferences/shared_preferences.dart';
+import 'helper/helper_functions.dart';
+
+>>>>>>> Stashed changes
 
 class HumanSettings extends StatefulWidget {
   final String _currentUid;
@@ -199,9 +205,12 @@ class _HumanSettingsState extends State<HumanSettings> {
   }
 
   void _onSaveSettingsPressed() async {
+<<<<<<< Updated upstream
     final DocumentReference user =
     FirebaseFirestore.instance.collection('users').doc(widget._currentUid);
 
+=======
+>>>>>>> Stashed changes
     Reference storageReference = FirebaseStorage.instance
         .ref()
         .child('users/' + widget._currentUid + '/profile');
@@ -210,6 +219,7 @@ class _HumanSettingsState extends State<HumanSettings> {
       UploadTask uploadTask = storageReference.putFile(personImage);
       print('File Uploaded');
     }
+<<<<<<< Updated upstream
 
     user.update({
       'name': _name,
@@ -220,6 +230,14 @@ class _HumanSettingsState extends State<HumanSettings> {
           context,
           MaterialPageRoute(
               builder: (context) => PersonProfile(widget._currentUid)));
+=======
+    writeUser.update({
+      'name': _name
+    });
+    HelperFunctions.saveUserNameSharedPreference(_name);
+    setState(() {
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage/2', (route)=>false);
+>>>>>>> Stashed changes
     });
   }
 

@@ -19,6 +19,10 @@ var randomGif = gifList[random.nextInt(gifList.length)];
 bool userWalking = false;
 List<DocumentSnapshot> myDogs = [];
 DocumentReference writeUser;
+<<<<<<< Updated upstream
+=======
+int dogsAmount = 0;
+>>>>>>> Stashed changes
 //PersonProfile personProfile = PersonProfile(FirebaseAuth.instance.currentUser.uid);
 
 

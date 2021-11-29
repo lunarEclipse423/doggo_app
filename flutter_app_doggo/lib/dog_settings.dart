@@ -693,7 +693,12 @@ class _DogSettingsState extends State<DogSettings> {
                               ),
                             ),
                             SizedBox(height: 35.67),
+<<<<<<< Updated upstream
                             SizedBox(
+=======
+                            Container(
+                              margin: EdgeInsets.fromLTRB(0, 0, 0, 50),
+>>>>>>> Stashed changes
                               width: 300,
                               height: 55,
                               child: ElevatedButton(
