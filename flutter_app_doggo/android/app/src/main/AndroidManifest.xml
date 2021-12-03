@@ -15,7 +15,7 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="google_maps"
+        android:label="Doggo"
         android:icon="@mipmap/ic_launcher">
 
         <!-- TODO: Add your API key here -->

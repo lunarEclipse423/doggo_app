@@ -77,9 +77,10 @@ class MyApp extends StatelessWidget {
     print("DONE");
     return FutureBuilder(builder: (context, snapshot) {
       return MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Geolocation',
         //initialRoute: start,
-        home: auth ? TabsPage(index : 1) : WelcomeWindow(),
+        home: /*auth ? TabsPage(index : 1) : */WelcomeWindow(),
         routes: {
           '/hello': (BuildContext context) => WelcomeWindow(),
           '/map': (BuildContext context) =>
@@ -163,7 +164,7 @@ class Map extends StatefulWidget {
 
 //ну глобальные переменные оч нужны извините мартынов не одобряет
 List<DocumentSnapshot> _walkingDogs = [];
-bool _status = true;
+bool status = true;
 Location _location = new Location();
 
 class _MapState extends State<Map> {
@@ -177,7 +178,7 @@ class _MapState extends State<Map> {
   static List<DocumentSnapshot> _myDogs = [];
   List<MultiSelectItem<DocumentSnapshot>> _items = [];
   int _selectedIndex = 0;
-  OverlayEntry _overlayEntry;
+  OverlayEntry _overlayEntry = OverlayEntry(builder: (context) =>Container(color: Colors.white.withOpacity(0)));
 
   @override
   void initState() {
@@ -200,8 +201,9 @@ class _MapState extends State<Map> {
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser.uid)
         .get();
-    _status = user.get('status');
+    status = user.get('status');
     userWalking = user.get('isWalking');
+    dogsAmount = user.get('dogsAmount');
   }
 
   _getDogsData() async {
@@ -237,170 +239,124 @@ class _MapState extends State<Map> {
         .docs;
 
     dogsList.forEach((element) async {
-      if(element.get('isWalking') == true) {
+      if (element.get('isWalking') == true) {
         String dogName = element.get('name');
 
         String dogImageURL = '';
-        Reference storageReference = FirebaseStorage.instance.ref().child(
-            'users/' + user.id + '/dogs/' + element.id + '/profile');
+        Reference storageReference = FirebaseStorage.instance
+            .ref()
+            .child('users/' + user.id + '/dogs/' + element.id + '/profile');
 
         await storageReference
             .getDownloadURL()
             .then((fileURL) => setState(() => dogImageURL = fileURL));
 
-        dogs.add(
-            GestureDetector(
-              onTap: (){
-                _overlayEntry.remove();
-                Navigator.of(context).push(SwipeablePageRoute(
-                    builder: (BuildContext context) =>
-                        DogProfile(user.id, element.id)));
-              },
-            child: Container(
-              margin: EdgeInsets.fromLTRB(15, 0, 15, 0),
-              child: SizedBox(
+        dogs.add(GestureDetector(
+          onTap: () {
+            _overlayEntry.remove();
+            Navigator.of(context).push(SwipeablePageRoute(
+                builder: (BuildContext context) =>
+                    DogProfile(user.id, element.id)));
+          },
+          child: Column(
+            children: [
+              Container(
                 height: 50,
-
-                  // style: ButtonStyle(
-                  //   backgroundColor: MaterialStateProperty.all(
-                  //       Colors.white.withOpacity(0)
-                  //   ),
-                  //   foregroundColor: MaterialStateProperty.all(
-                  //       Colors.white.withOpacity(0)
-                  //   ),
-                  //   overlayColor: MaterialStateProperty.all(
-                  //       Colors.white.withOpacity(0)
-                  //   ),
-                  //   shadowColor: MaterialStateProperty.all(
-                  //       Colors.white.withOpacity(0)
-                  //   ),
-                  // ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(dogImageURL),
-                            fit: BoxFit.cover,
-                          ),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      SizedBox(width: 60),
-                      Container(
-                        width: 70,
-                        height: 80,
-                        child: Stack(
-                          children: [
-                            Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  SizedBox(height: 4),
-                                  Row(children: [
-                                    Text(
-                                      dogName,
-                                      style: TextStyle(
-                                        color: Color(0xff48659e),
-                                        fontSize: 13,
-                                        fontFamily: "Roboto",
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.12,
-                                      ),
-                                    ),
-                                  ]),
-                                ]),
-                          ],
-                        ),
-                      ),
-                    ],
+                width: 50,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: CachedNetworkImageProvider(dogImageURL),
+                    fit: BoxFit.cover,
                   ),
-                  // onPressed: () {
-                  //   _overlayEntry.remove();
-                  //   Navigator.of(context).push(SwipeablePageRoute(
-                  //       builder: (BuildContext context) =>
-                  //           DogProfile(user.id, element.id)));
-                  // },
+                  borderRadius: BorderRadius.circular(100),
                 ),
               ),
-            )
-        );
+              Text(
+                dogName,
+                style: TextStyle(
+                  color: Color(0xff48659e),
+                  fontSize: 13,
+                  fontFamily: "Roboto",
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.12,
+                ),
+              ),
+            ],
+          ),
+          // ),
+        ));
       }
     });
 
-//loading = false;
   }
 
 
   _showOverlay(BuildContext context, DocumentSnapshot user) async {
     List<Widget> dogs = [];
-       // bool loading = true;
     int walkingDogs = user.get('walkingDogs');
-   // bool start = false;
     bool finish = false;
+    bool start = false;
     while (dogs.length < walkingDogs && finish == false) {
       print('LOADING........');
-        await _getDogs(dogs, user).then((value) => (){ finish = true;});
-     // loading = false;
+     // if(start == false) {
+        start = true;
+        await _getDogs(dogs, user).then((value) =>
+            () {
+          finish = true;
+        });
+     // }
     }
 
-    _overlayEntry =  OverlayEntry(
-      builder: (context) =>
-          ElevatedButton(
+    _overlayEntry = OverlayEntry(
+        builder: (context) => ElevatedButton(
             style: ButtonStyle(
-              backgroundColor:
-              MaterialStateProperty.all(Colors.white.withOpacity(0)),
-              enableFeedback: false
-                ),
-              onPressed: (){ _overlayEntry?.remove();},
-              child: Container(
-                height: MediaQuery.of(context).size.height,
-                width: MediaQuery.of(context).size.width,
-                child: Align(
+                backgroundColor:
+                MaterialStateProperty.all(Colors.white.withOpacity(0)),
+                enableFeedback: false),
+            onPressed: () {
+              _overlayEntry?.remove();
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
                   alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 90.0),
-                    height: MediaQuery.of(context).size.height * 0.13,
-                    width: MediaQuery.of(context).size.width * 0.53,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: ListView(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.fromLTRB(0.0, 10, 0.0, 50),
-                            scrollDirection: Axis.horizontal,
-                            children: dogs.toList(),
-                          ),
-                        ),
-                      ],
-                    ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(25),
                   ),
-          ),
-      )
-          )
-    );
+                  margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 90.0),
+                  height: MediaQuery.of(context).size.height * 0.14,
+                  width: MediaQuery.of(context).size.width * 0.53,
+                  child: FractionallySizedBox(
+                    child: ListView.separated(
+                        itemCount: walkingDogs,
+                        shrinkWrap: true,
+                        //   padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (_, int index) {
+                          return dogs[index];
+                        },
+                        separatorBuilder: (BuildContext context, int index) {
+                          return SizedBox(
+                            width: 20,
+                          );
+                        }),
+                  ),
+                ),
+              ),
+            )));
     setState(() {
-      if(dogs.length > walkingDogs)
-      {
-        while(dogs.length != walkingDogs)
-        {
-          dogs.removeLast();
-        }
-      }
       Overlay.of(context).insert(_overlayEntry);
     });
-
   }
 
 
   void _addMarker(DocumentSnapshot user, String dog)  async {
-
+    int walkingDogs = user.get('walkingDogs');
     _markers.add(Marker(
         markerId: MarkerId(user.id),
         icon:
@@ -411,11 +367,18 @@ class _MapState extends State<Map> {
           // Navigator.of(context).push(SwipeablePageRoute(
           //   builder: (BuildContext context) => DogProfile(user.id, dog),
           // ));
-          await _showOverlay(context,  user);
+          if(walkingDogs == 1) {
+            Navigator.of(context).push(SwipeablePageRoute(
+                builder: (BuildContext context) =>
+                    DogProfile(user.id, dog)));
+          }
+            else {
+            await _showOverlay(context, user);
+          }
         }));
     _markers.add(Marker(
       markerId: MarkerId(user.id + "/number"),
-      icon: _iconNumbers[user.get('walkingDogs') - 1],
+      icon: _iconNumbers[walkingDogs - 1],
       position:
           LatLng(user.get('location').latitude, user.get('location').longitude),
     ));
@@ -624,21 +587,21 @@ class _MapState extends State<Map> {
     );
   }
 
-  Widget _dogStatus = _status == true
+  Widget _dogStatus = status == true
       ? SvgPicture.asset('assets/good.svg')
       : SvgPicture.asset('assets/bad.svg');
   final Widget GoodDogIcon = SvgPicture.asset('assets/good.svg');
   final Widget BadDogIcon = SvgPicture.asset('assets/bad.svg');
 
   void _onChangeStatusButtonPressed() {
-    if (_status == true) {
+    if (status == true) {
       _dogStatus = BadDogIcon;
       writeUser.update({'status': false});
-      _status = false;
+      status = false;
     } else {
       _dogStatus = GoodDogIcon;
       writeUser.update({'status': true});
-      _status = true;
+      status = true;
     }
     //дальше обновляем прорисовку марки
     _markers.removeWhere((m) =>

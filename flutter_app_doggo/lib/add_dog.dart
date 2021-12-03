@@ -128,8 +128,6 @@ class _AddDogWindowState extends State<AddDogWindow> {
     UploadTask uploadTask = storageReference.putFile(dogImage);
     print('File Uploaded');
 
-
-
     bool isException = true;
 
     do
@@ -160,13 +158,13 @@ class _AddDogWindowState extends State<AddDogWindow> {
             }
           );
 
-      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage/1', (route) => false);
     });
   }
 
   void _onNotAddDogButtonPressed() {
     setState(() {
-      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/tabsPage/1', (route) => false);
     });
   }
 
@@ -491,7 +489,7 @@ class _AddDogWindowState extends State<AddDogWindow> {
                                   if (value.isEmpty) {
                                     return "please enter your dog's age :)";
                                   }
-                                  if (int.parse(value) >= 40 ||
+                                  if (int.parse(value) >= 30 ||
                                       int.parse(value) < 0) {
                                     return "please enter your dog's REAL age :)";
                                   }

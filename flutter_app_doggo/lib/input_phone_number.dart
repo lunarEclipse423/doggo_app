@@ -5,6 +5,7 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'const.dart';
 
 
 class InputPhoneNumberWindow extends StatefulWidget {
@@ -22,6 +23,7 @@ class _InputPhoneNumberWindowState extends State<InputPhoneNumberWindow> {
       documents.forEach((data) async {
         find = true;
         if(data.get('phoneNumber') == phoneNumber) {
+          register = false;
           Navigator.of(context).push(SwipeablePageRoute(
               builder: (context) =>
                   InputCodeWindow(phoneNumber, data.get('name'), null, false)));

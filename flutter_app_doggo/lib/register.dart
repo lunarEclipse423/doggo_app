@@ -9,6 +9,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'input_code.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'const.dart';
 
 
 
@@ -103,6 +104,7 @@ class _RegisterWindowState extends State<RegisterWindow> {
       );
       if(isAuth == false) {
         print('Register -> Code');
+        register = true;
         Navigator.of(context).push(SwipeablePageRoute(
             builder: (context) => InputCodeWindow(phoneNumber, name, personImage, true)));
       }
@@ -289,51 +291,47 @@ class _RegisterWindowState extends State<RegisterWindow> {
                             ),
                             SizedBox(height: 38.67),
                             // КНОПКА "ПРОДОЛЖИТЬ"
-                            TextButton(
-                              onPressed: () {
-                                final form = _formKey.currentState;
-                                if (form.validate()) {
-                                  _onRegisterButtonPressed();
-                                }},
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Container(
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: 238,
-                                        minHeight: 51,
-                                        //maxWidth: 2 * MediaQuery.of(context).size.height / 3,
-                                        //maxHeight: 2 * MediaQuery.of(context).size.height / 3),
-                                      ),
+                            SizedBox(
+                              width: 300,
+                              height: 55,
+                              child:
+                              ElevatedButton(
+                                onPressed: () {
+                                  final form = _formKey.currentState;
+                                  if (form.validate()) {
+                                    _onRegisterButtonPressed();
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                  MaterialStateProperty.all(
+                                      Color(0xff789fff)),
+                                  foregroundColor:
+                                  MaterialStateProperty.all(
+                                    Color(0xff789fff),
                                     ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Color(0x26000000),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 4),
-                                        ),
-                                        BoxShadow(
-                                          color: Color(0xffffffff),
-                                          blurRadius: 4,
-                                          offset: Offset(0, -4),
-                                        ),
-                                      ],
-                                      color: Color(0xff789fff),
-                                    ),
+                                    overlayColor: MaterialStateProperty.all(
+                                        Color(0xff789fff)),
+                                    shadowColor: MaterialStateProperty.all(
+                                        Color(0xff789fff)),
+                                    enableFeedback: false,
+                                    shape: MaterialStateProperty.all<
+                                        RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(22),
+                                            side: BorderSide(
+                                                color: Color(0x59c2d1f5))))
+                                ),
+                                child: Text(
+                                  "ПРОДОЛЖИТЬ",
+                                  style: TextStyle(
+                                    color: Color(0xfffbfbfb),
+                                    fontSize: 18,
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                  Text(
-                                    "ПРОДОЛЖИТЬ",
-                                    style: TextStyle(
-                                      color: Color(0xfffbfbfb),
-                                      fontSize: 18,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  )
-                                ],
+                                )
                               ),
                             ),
                             SizedBox(height: 10.67),

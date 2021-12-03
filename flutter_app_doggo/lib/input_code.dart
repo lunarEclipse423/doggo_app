@@ -34,39 +34,17 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
   );
 
   _addUsedIdDB() async {
-    final DocumentReference user = FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser.uid);
-
+    myName = widget.name;
+    phoneNumber = widget.phone;
     if (widget.register == true) {
-      Reference storageReference = FirebaseStorage.instance
-          .ref()
-          .child('users/' + FirebaseAuth.instance.currentUser.uid + '/profile');
 
-      print('Reference Created');
-      UploadTask uploadTask = storageReference.putFile(widget.personImage);
-      print('File Uploaded');
-
-      user.set({
-        'name': widget.name,
-        'phoneNumber': widget.phone,
-        'location' : GeoPoint(0.0, 0.0),
-        'isWalking' : false,
-        'status' : true,
-        'walkingDogs' : 0
-      }, SetOptions(merge: false));
-      Navigator.pushNamedAndRemoveUntil(context, '/addDog/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
+      if(mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/addDog/${FirebaseAuth.instance.currentUser.uid}', (
+            route) => false);
+      }
     }
     else {
-      user.update({
-        'isWalking': false,
-        'status' : true});
-      final CollectionReference writeDogs = user.collection('dogs');
-      final QuerySnapshot dogs = await user.collection('dogs').get();
-      final List<DocumentSnapshot> docDogs = dogs.docs;
-      docDogs.forEach((dog) {
-        writeDogs.doc(dog.id).update({'isWalking' : false});
-      });
       if(mounted) {
         Navigator.pushNamedAndRemoveUntil(
             context, '/tabsPage/1', (

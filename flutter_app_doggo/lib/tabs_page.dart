@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps/const.dart';
 import 'tab_navigation_item.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
 
 bool isEntry = true;
 
@@ -18,10 +20,11 @@ class _TabsPageState extends State<TabsPage> {
   //int _currentIndex = 1;
   @override
   void initState() {
-    if(isEntry == true)
-      {
-        _setUserData();
-      }
+    _addUsedIdDB();
+    // if(isEntry == true)
+    //   {
+    //     _setUserData();
+    //   }
     // TODO: implement initState
     super.initState();
 
@@ -44,6 +47,46 @@ class _TabsPageState extends State<TabsPage> {
 
     isEntry = false;
   }
+
+  _addUsedIdDB() async {
+    final DocumentReference user = FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser.uid);
+
+    if (register == true) {
+      // Reference storageReference = FirebaseStorage.instance
+      //     .ref()
+      //     .child('users/' + FirebaseAuth.instance.currentUser.uid + '/profile');
+
+      print('Reference Created');
+      //UploadTask uploadTask = storageReference.putFile(widget.personImage);
+      print('File Uploaded');
+
+      user.set({
+        'name': myName,
+        'phoneNumber': phoneNumber,
+        'location' : GeoPoint(0.0, 0.0),
+        'isWalking' : false,
+        'status' : true,
+        'walkingDogs' : 0,
+      }, SetOptions(merge: false));
+
+    }
+    else {
+      user.update({
+        'isWalking': false,
+        'status' : true});
+      final CollectionReference writeDogs = user.collection('dogs');
+      final QuerySnapshot dogs = await user.collection('dogs').get();
+      final List<DocumentSnapshot> docDogs = dogs.docs;
+      docDogs.forEach((dog) {
+        writeDogs.doc(dog.id).update({'isWalking' : false});
+      });
+
+      //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {

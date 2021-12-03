@@ -10,12 +10,8 @@ import 'package:flutter/src/painting/box_decoration.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-<<<<<<< Updated upstream
-
-=======
 import 'services/database.dart';
 import 'views/chat.dart';
->>>>>>> Stashed changes
 import 'const.dart';
 
 class PersonProfileView extends StatefulWidget {
@@ -29,13 +25,8 @@ class PersonProfileView extends StatefulWidget {
 
 class _PersonProfileViewState extends State<PersonProfileView> {
   String _personImageURL;
-<<<<<<< Updated upstream
-  String _personName = 'Анастасия';
-
-=======
   String _personName = ' ';
   String _myName = ' ';
->>>>>>> Stashed changes
   bool _isWalking = false;
 
   List<Widget> _dogs = [];
@@ -50,14 +41,10 @@ class _PersonProfileViewState extends State<PersonProfileView> {
     DocumentSnapshot user = await FirebaseFirestore.instance.collection('users')
         .doc(widget._currentUid)
         .get();
-<<<<<<< Updated upstream
-
-=======
     DocumentSnapshot mySnap = await FirebaseFirestore.instance.collection('users')
         .doc(FirebaseAuth.instance.currentUser.uid)
         .get();
     String myName = mySnap.get('name');
->>>>>>> Stashed changes
     String personName = user.get('name');
     bool isWalking = user.get('isWalking');
 
@@ -79,10 +66,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
     List<Widget> dogs = _fillListDogs(dogsList);
 
     setState(() {
-<<<<<<< Updated upstream
-=======
       _myName = myName;
->>>>>>> Stashed changes
       _personImageURL = personImageURL;
       _personName = personName;
       _isWalking = isWalking;
@@ -194,10 +178,6 @@ class _PersonProfileViewState extends State<PersonProfileView> {
     return dogs;
   }
 
-<<<<<<< Updated upstream
-  void _onUserChatButtonPressed() {
-    setState(() {
-=======
   getChatRoomId(String a, String b) {
     return ((a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0))
         ? "$b\_$a"
@@ -226,7 +206,6 @@ class _PersonProfileViewState extends State<PersonProfileView> {
 
     setState(() {
 
->>>>>>> Stashed changes
       //тут надо сделать открытие чата с КОНКРЕТНЫМ пользователем
     });
   }
