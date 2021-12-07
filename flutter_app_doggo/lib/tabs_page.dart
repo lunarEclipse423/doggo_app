@@ -49,7 +49,7 @@ class _TabsPageState extends State<TabsPage> {
   }
 
   _addUsedIdDB() async {
-    final DocumentReference user = FirebaseFirestore.instance
+    writeUser = FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser.uid);
 
@@ -59,25 +59,27 @@ class _TabsPageState extends State<TabsPage> {
       //     .child('users/' + FirebaseAuth.instance.currentUser.uid + '/profile');
 
       print('Reference Created');
-      //UploadTask uploadTask = storageReference.putFile(widget.personImage);
+     // UploadTask uploadTask = storageReference.putFile(widget.personImage);
       print('File Uploaded');
 
-      user.set({
+      writeUser.set({
         'name': myName,
         'phoneNumber': phoneNumber,
         'location' : GeoPoint(0.0, 0.0),
         'isWalking' : false,
         'status' : true,
         'walkingDogs' : 0,
+        'idUser' : FirebaseAuth.instance.currentUser.uid,
+        'personImageURL' : ' '
       }, SetOptions(merge: false));
 
     }
     else {
-      user.update({
+      writeUser.update({
         'isWalking': false,
         'status' : true});
-      final CollectionReference writeDogs = user.collection('dogs');
-      final QuerySnapshot dogs = await user.collection('dogs').get();
+      final CollectionReference writeDogs = writeUser.collection('dogs');
+      final QuerySnapshot dogs = await writeUser.collection('dogs').get();
       final List<DocumentSnapshot> docDogs = dogs.docs;
       docDogs.forEach((dog) {
         writeDogs.doc(dog.id).update({'isWalking' : false});

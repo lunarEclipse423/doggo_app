@@ -23,6 +23,7 @@ int dogsAmount = 0;
 bool register = true;
 String phoneNumber = '';
 String myName = '';
+String personImage = ' ';
 //PersonProfile personProfile = PersonProfile(FirebaseAuth.instance.currentUser.uid);
 
 

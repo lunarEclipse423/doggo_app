@@ -590,8 +590,8 @@ class _HumanSettingsState extends State<HumanSettings> {
                       ),
                       onPressed: () {
                         _overlayEntry.remove();
-                        Navigator.pushNamedAndRemoveUntil(context,
-                            '/addDog/${widget._currentUid}', (route) => false);
+                        Navigator.pushNamed(context,
+                            '/addDog/${widget._currentUid}');
                       },
                       child: Text(
                         "Добавить собаку",

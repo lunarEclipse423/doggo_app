@@ -117,14 +117,14 @@ class _RegisterWindowState extends State<RegisterWindow> {
       return ((isPicked == true && isCropped == false)
           ? _buildCropWidget()
           : _buildRegisterWidget());
-    }
-    on Exception catch(e) {
+    } on Exception catch (e) {
       print('error caught: $e');
     }
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
+    final pickedFile =
+    await ImagePicker().getImage(source: ImageSource.gallery);
     final file = File(pickedFile.path);
 
     final sample = await ImageCrop.sampleImage(
@@ -161,54 +161,51 @@ class _RegisterWindowState extends State<RegisterWindow> {
     debugPrint('$croppedImage');
   }
 
-  Widget _buildRegisterWidget () {
+  Widget _buildRegisterWidget() {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Container(
-            margin: EdgeInsets.fromLTRB(0.0, 150, 0.0, 0.0),
+            margin: EdgeInsets.fromLTRB(0.0, 100, 0.0, 0.0),
             child: Builder(
                 builder: (context) => Form(
                     key: _formKey,
                     child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            // ЛОГОТИП "DOGGO"
-                            Container(
-                              width: 112,
-                              height: 112,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0x59c2d1f5),
-                                    blurRadius: 7,
-                                    offset: Offset(4, 4),
+                            SizedBox(
+                              width: 150,
+                              height: 150,
+                              child: ElevatedButton(
+                                onPressed: _onAddPhotoButtonPressed,
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                  MaterialStateProperty.all(Color(0xfffbfbfb)),
+                                  foregroundColor: MaterialStateProperty.all(
+                                    Color(0xfffbfbfb),
                                   ),
-                                  BoxShadow(
-                                    color: Color(0xffffffff),
-                                    blurRadius: 4,
-                                    offset: Offset(-4, -4),
-                                  ),
-                                ],
-                                color: Color(0xfffbfbfb),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Ionicons.ios_paw,
-                                      color: Color(0xff789fff), size: 72),
-                                  Text(
-                                    "DOGGO",
-                                    style: TextStyle(
-                                      color: Color(0xff789fff),
-                                      fontSize: 14,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.98,
+                                  overlayColor:
+                                  MaterialStateProperty.all(Color(0xfffbfbfb)),
+                                  shadowColor:
+                                  MaterialStateProperty.all(Color(0xfffbfbfb)),
+                                  //elevation: MaterialStateProperty.all(20),
+                                  side: MaterialStateProperty.all(BorderSide(
+                                      width: 155,
+                                      style: BorderStyle.none,
+                                      color: Color(0xfffbfbfb))),
+                                  enableFeedback: false,
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                      side: BorderSide(color: Color(0x59c2d1f5)),
                                     ),
                                   ),
-                                ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: buttonList,
+                                ),
                               ),
                             ),
                             SizedBox(height: 88.67),
@@ -244,9 +241,9 @@ class _RegisterWindowState extends State<RegisterWindow> {
                                 validator: (value) {
                                   if (value.isEmpty) {
                                     return 'Invalid Name';
-                                  }},
-                                onChanged: (input)
-                                {
+                                  }
+                                },
+                                onChanged: (input) {
                                   name = input;
                                 },
                               ),
@@ -258,8 +255,7 @@ class _RegisterWindowState extends State<RegisterWindow> {
                                 margin: EdgeInsets.fromLTRB(55.0, 0.0, 0.0, 0.0),
                                 child: Text(
                                   "введите номер телефона:",
-                                  style:
-                                  TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xb248659e),
                                     fontSize: 14,
                                     fontFamily: "Roboto",
@@ -294,8 +290,7 @@ class _RegisterWindowState extends State<RegisterWindow> {
                             SizedBox(
                               width: 300,
                               height: 55,
-                              child:
-                              ElevatedButton(
+                              child: ElevatedButton(
                                 onPressed: () {
                                   final form = _formKey.currentState;
                                   if (form.validate()) {
@@ -303,12 +298,10 @@ class _RegisterWindowState extends State<RegisterWindow> {
                                   }
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor:
-                                  MaterialStateProperty.all(
-                                      Color(0xff789fff)),
-                                  foregroundColor:
-                                  MaterialStateProperty.all(
-                                    Color(0xff789fff),
+                                    backgroundColor: MaterialStateProperty.all(
+                                        Color(0xff789fff)),
+                                    foregroundColor: MaterialStateProperty.all(
+                                      Color(0xff789fff),
                                     ),
                                     overlayColor: MaterialStateProperty.all(
                                         Color(0xff789fff)),
@@ -318,11 +311,9 @@ class _RegisterWindowState extends State<RegisterWindow> {
                                     shape: MaterialStateProperty.all<
                                         RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(22),
+                                            borderRadius: BorderRadius.circular(22),
                                             side: BorderSide(
-                                                color: Color(0x59c2d1f5))))
-                                ),
+                                                color: Color(0x59c2d1f5))))),
                                 child: Text(
                                   "ПРОДОЛЖИТЬ",
                                   style: TextStyle(
@@ -331,16 +322,13 @@ class _RegisterWindowState extends State<RegisterWindow> {
                                     fontFamily: "Roboto",
                                     fontWeight: FontWeight.w700,
                                   ),
-                                )
+                                ),
                               ),
                             ),
                             SizedBox(height: 10.67),
                           ],
-                        ))))
-        )
-    );
+                        ))))));
   }
-
 
   Widget _buildCropWidget() {
     return Column(
