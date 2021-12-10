@@ -20,11 +20,11 @@ class _TabsPageState extends State<TabsPage> {
   //int _currentIndex = 1;
   @override
   void initState() {
-    _addUsedIdDB();
-    // if(isEntry == true)
-    //   {
-    //     _setUserData();
-    //   }
+
+    if(isEntry == true)
+      {
+        _addUsedIdDB();
+      }
     // TODO: implement initState
     super.initState();
 
@@ -54,12 +54,12 @@ class _TabsPageState extends State<TabsPage> {
         .doc(FirebaseAuth.instance.currentUser.uid);
 
     if (register == true) {
-      // Reference storageReference = FirebaseStorage.instance
-      //     .ref()
-      //     .child('users/' + FirebaseAuth.instance.currentUser.uid + '/profile');
+      Reference storageReference = FirebaseStorage.instance
+          .ref()
+          .child('users/' + FirebaseAuth.instance.currentUser.uid + '/profile');
 
       print('Reference Created');
-     // UploadTask uploadTask = storageReference.putFile(widget.personImage);
+      UploadTask uploadTask = storageReference.putFile(PersonImage);
       print('File Uploaded');
 
       writeUser.set({
@@ -74,7 +74,7 @@ class _TabsPageState extends State<TabsPage> {
       }, SetOptions(merge: false));
 
     }
-    else {
+    else{
       writeUser.update({
         'isWalking': false,
         'status' : true});
@@ -84,9 +84,9 @@ class _TabsPageState extends State<TabsPage> {
       docDogs.forEach((dog) {
         writeDogs.doc(dog.id).update({'isWalking' : false});
       });
-
       //Navigator.pushNamedAndRemoveUntil(context, '/map/${FirebaseAuth.instance.currentUser.uid}', (route) => false);
     }
+    isEntry = false;
   }
 
 

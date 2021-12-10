@@ -80,7 +80,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Flutter Geolocation',
         //initialRoute: start,
-        home: /*auth ? TabsPage(index : 1) : */WelcomeWindow(),
+        home: /*auth ? TabsPage(index : 1) :*/ WelcomeWindow(),
         routes: {
           '/hello': (BuildContext context) => WelcomeWindow(),
           '/map': (BuildContext context) =>

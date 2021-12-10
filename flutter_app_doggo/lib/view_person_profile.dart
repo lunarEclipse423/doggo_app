@@ -84,7 +84,7 @@ class _PersonProfileViewState extends State<PersonProfileView> {
       Reference storageReference = FirebaseStorage.instance
           .ref()
           .child('users/' + widget._currentUid + '/dogs/'
-          + dogName
+          + element.id
           + '/profile');
 
       await storageReference.getDownloadURL().then((fileURL) => setState(() => dogImageURL = fileURL));

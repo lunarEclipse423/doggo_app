@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'dart:ui';
 import "dart:math";
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,7 +25,7 @@ int dogsAmount = 0;
 bool register = true;
 String phoneNumber = '';
 String myName = '';
-String personImage = ' ';
+File PersonImage;
 //PersonProfile personProfile = PersonProfile(FirebaseAuth.instance.currentUser.uid);
 
 

@@ -36,6 +36,7 @@ class _InputCodeWindowState extends State<InputCodeWindow> {
   _addUsedIdDB() async {
     myName = widget.name;
     phoneNumber = widget.phone;
+    PersonImage = widget.personImage;
     if (widget.register == true) {
 
       if(mounted) {
