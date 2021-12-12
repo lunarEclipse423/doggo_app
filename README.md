@@ -11,3 +11,20 @@
 1. Случайные нежелательные встречи с другими собаками, представляющими опасность собаке хозяина во время её выгула
 2. Кинофобия и неприязнь к собакам
 3. Отсутствие информации о желаемой породе в должном объёме в доступных источниках
+***
+## Скриншоты работы приложения
+![welcome screen](./screenshots/1.jpg)
+![login screen](./screenshots/2.jpg)
+![message screen](./screenshots/3.jpg)
+![add dog screen](./screenshots/4.jpg)
+![map screen](./screenshots/5.jpg)
+![map screen](./screenshots/6.jpg)
+![map screen](./screenshots/7.jpg)
+![dog profile screen](./screenshots/8.jpg)
+![owner profile screen](./screenshots/9.jpg)
+![edit profile screen](./screenshots/10.jpg)
+![choose dog profile to edit screen](./screenshots/11.jpg)
+![edit dog profile screen](./screenshots/12.jpg)
+***
+## Тестирование
+В этом проекте мы использовали проверку «серого ящика», т. к. тестированием занимались те же люди, что и писали код. Однако мы тестировали не только свой код, но и части приложения, которые писали другие разработчики, не зная о их реализации практически ничего. И так, тестируя код на разных устройствах, в разное время, мы быстро находили ошибки друг друга и передавали их на исправление.
